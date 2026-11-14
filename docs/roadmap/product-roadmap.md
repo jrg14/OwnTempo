@@ -1,0 +1,58 @@
+# Roadmap inicial del producto
+
+Este documento expresa la evolución funcional prevista. No describe modelos,
+endpoints ni tareas de programación.
+
+## Fase 0 — Base del servicio
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Backend Django y Django REST Framework | `completada` |
+| Base de datos PostgreSQL | `completada` |
+| Entorno local con Podman Compose | `completada` |
+| Comprobación del estado del servicio | `completada` |
+| Base móvil con React Native, Expo y TypeScript | `completada` |
+
+## Fase 1 — Identidad y espacios
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Registro e identificación de usuarios | `planificada` |
+| Gestión de la cuenta personal | `planificada` |
+| Espacio personal del usuario | `planificada` |
+| Creación y gestión de espacios compartidos | `planificada` |
+| Invitaciones, miembros, roles y permisos | `planificada` |
+
+## Fase 2 — Plataforma modular
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Catálogo de módulos disponibles | `planificada` |
+| Activación de módulos por espacio | `planificada` |
+| Navegación entre espacios y módulos | `planificada` |
+| Panel inicial configurable | `propuesta` |
+
+## Fase 3 — Organización cotidiana
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Módulo de tareas personales y compartidas | `planificada` |
+| Módulo de listas de la compra | `planificada` |
+
+## Fase 4 — Planificación y economía
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Módulo de calendario personal y compartido | `planificada` |
+| Módulo de gastos personales y compartidos | `planificada` |
+
+## Fase 5 — Evolución del producto
+
+| Funcionalidad | Estado |
+| --- | --- |
+| Hábitos y rutinas | `propuesta` |
+| Comidas y recetas | `propuesta` |
+| Inventario doméstico | `propuesta` |
+| Notas y documentos | `propuesta` |
+| Suscripciones | `propuesta` |
+
