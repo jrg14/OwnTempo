@@ -32,7 +32,8 @@ select {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid #e6a75a;
   outline-offset: 3px;
 }
@@ -254,7 +255,9 @@ input:focus-visible {
 .login-card,
 .loading-card,
 .account-card,
-.personal-space-card {
+.personal-space-card,
+.shared-space-card,
+.spaces-workspace {
   border: 1px solid #dce7e3;
   border-radius: 28px;
   background: #fff;
@@ -443,6 +446,264 @@ input:focus-visible {
 
 .personal-space-card--loading p {
   margin: 0;
+}
+
+.spaces-workspace {
+  padding: 1.5rem;
+}
+
+.spaces-workspace--loading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  color: #1f6b5c;
+  font-weight: 700;
+}
+
+.spaces-workspace--loading p {
+  margin: 0;
+}
+
+.workspace-heading,
+.space-card__heading,
+.subsection-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.workspace-heading h2,
+.shared-space-card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.workspace-description {
+  max-width: 560px;
+  margin: 0.5rem 0 0;
+  color: #60736e;
+  line-height: 1.5;
+}
+
+.invitation-count,
+.role-badge {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  color: #174f45;
+  background: #e3f4ec;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.invitation-inbox {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #efd4af;
+  border-radius: 18px;
+  background: #fff7ec;
+}
+
+.invitation-inbox h3,
+.space-subsection h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.invitation-inbox ul,
+.member-list,
+.pending-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.invitation-inbox li,
+.member-list li,
+.pending-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.invitation-inbox li {
+  margin-top: 0.875rem;
+}
+
+.invitation-inbox li > div:first-child,
+.member-list li > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+}
+
+.invitation-inbox li span,
+.member-list li span,
+.pending-list {
+  color: #60736e;
+  font-size: 0.875rem;
+}
+
+.invitation-actions,
+.inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.625rem;
+}
+
+.invitation-actions .primary-button,
+.invitation-actions .secondary-button,
+.inline-form .primary-button,
+.inline-form .secondary-button {
+  margin-top: 0;
+}
+
+.secondary-button,
+.danger-button {
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.secondary-button {
+  color: #1f6b5c;
+  background: #e9f2ef;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #dcebe6;
+}
+
+.danger-button {
+  margin-top: 1.5rem;
+  color: #8f3535;
+  background: #fbeaea;
+}
+
+.secondary-button:disabled,
+.danger-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.space-toolbar {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1rem;
+  border-radius: 18px;
+  background: #f4f7f6;
+}
+
+.space-toolbar > div,
+.create-space-form,
+.invite-form > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.space-toolbar label,
+.shared-space-card label {
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.space-toolbar select,
+.space-toolbar input,
+.shared-space-card input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #cbdad5;
+  border-radius: 12px;
+  color: #18302b;
+  background: #fff;
+}
+
+.create-space-form .inline-form input,
+.compact-form .inline-form input,
+.invite-form > div {
+  flex: 1;
+}
+
+.active-space-panel {
+  margin-top: 1.5rem;
+}
+
+.active-space-panel .personal-space-card,
+.active-space-panel .shared-space-card {
+  box-shadow: none;
+}
+
+.shared-space-card {
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 92% 8%, rgb(31 107 92 / 12%), transparent 10rem),
+    #fff;
+}
+
+.compact-form {
+  max-width: 520px;
+  margin-top: 1.25rem;
+}
+
+.space-subsection {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #dce7e3;
+}
+
+.subsection-heading span {
+  color: #60736e;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.member-list li,
+.pending-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #edf2f0;
+}
+
+.member-list li:last-child,
+.pending-list li:last-child {
+  border-bottom: 0;
+}
+
+.danger-text-button {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  color: #8f3535;
+  background: #fbeaea;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-text-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.invite-form {
+  margin-top: 0.875rem;
+}
+
+.pending-list {
+  margin-top: 0.75rem;
+}
+
+.muted-status {
+  margin: 0.75rem 0 0;
+  color: #60736e;
 }
 
 .account-card__heading {
@@ -675,6 +936,29 @@ input:focus-visible {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-heading,
+  .space-card__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .space-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form,
+  .invitation-inbox li,
+  .member-list li,
+  .pending-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inline-form button,
+  .invitation-actions {
+    align-self: flex-start;
   }
 }
 

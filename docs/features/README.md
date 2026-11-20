@@ -10,6 +10,7 @@ y verificado en OwnTempo. No se usa para propuestas ni diseños futuros.
 - [Entorno Docker para servidor doméstico](docker-home-stack.md)
 - [Usuarios y autenticación doméstica](users-authentication.md)
 - [Espacio personal del usuario](personal-space.md)
+- [Espacios compartidos, invitaciones y miembros](shared-spaces-and-memberships.md)
 
 Cada documento debe describir el comportamiento real, arquitectura, modelo de
 datos, API, permisos, decisiones técnicas y pruebas asociadas.

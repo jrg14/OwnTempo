@@ -87,10 +87,13 @@ Las llamadas mutables usan la misma protección CSRF que la gestión de cuenta.
 - Sincronización entre modelos y migraciones.
 - TypeScript, ESLint y compilación de producción de la PWA.
 
-## Fuera de alcance
+## Evolución posterior
 
-- Creación de espacios compartidos desde la PWA.
-- Invitaciones y gestión de miembros.
+Los espacios compartidos, invitaciones y miembros están documentados en
+[`shared-spaces-and-memberships.md`](shared-spaces-and-memberships.md).
+
+## Fuera de alcance de esta feature
+
 - Roles avanzados.
 - Activación de módulos por espacio.
 - Recursos de tareas, compras, calendario o gastos.

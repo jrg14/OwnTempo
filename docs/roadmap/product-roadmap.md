@@ -21,8 +21,8 @@ endpoints ni tareas de programación.
 | Inicio y cierre de sesión desde la PWA | `completada` |
 | Consulta y edición de la cuenta actual | `completada` |
 | Espacio personal del usuario | `completada` |
-| Creación y gestión de espacios compartidos | `planificada` |
-| Invitaciones, miembros, roles y permisos | `planificada` |
+| Creación y gestión de espacios compartidos | `completada` |
+| Invitaciones, miembros, roles y permisos | `completada` |
 
 ## Fase 2 — Plataforma modular
 

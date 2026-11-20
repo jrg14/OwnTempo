@@ -79,7 +79,7 @@ async function getCsrfToken() {
 
 export async function mutate(
   path: string,
-  method: 'POST' | 'PATCH',
+  method: 'POST' | 'PATCH' | 'DELETE',
   body?: unknown,
 ) {
   const csrfToken = await getCsrfToken();
