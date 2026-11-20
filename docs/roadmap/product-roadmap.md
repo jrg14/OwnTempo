@@ -20,7 +20,7 @@ endpoints ni tareas de programación.
 | Alta y gestión de usuarios mediante Django Admin | `completada` |
 | Inicio y cierre de sesión desde la PWA | `completada` |
 | Consulta y edición de la cuenta actual | `completada` |
-| Espacio personal del usuario | `planificada` |
+| Espacio personal del usuario | `completada` |
 | Creación y gestión de espacios compartidos | `planificada` |
 | Invitaciones, miembros, roles y permisos | `planificada` |
 

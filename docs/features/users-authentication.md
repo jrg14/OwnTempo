@@ -23,7 +23,8 @@ Los datos disponibles son:
 - `last_name`: apellidos opcionales.
 - Los campos administrativos estándar de Django, gestionados solo desde Admin.
 
-No se crea un perfil separado ni un espacio personal.
+No se crea un perfil separado. La app `spaces` crea el espacio personal asociado
+como una feature independiente.
 
 ## Administración
 
@@ -130,4 +131,4 @@ No se añadieron ni ejecutaron tests automatizados.
 - Cambio o recuperación de contraseña desde la PWA.
 - Tokens JWT.
 - Segundo factor de autenticación.
-- Espacios personales o compartidos.
+- Espacios compartidos.

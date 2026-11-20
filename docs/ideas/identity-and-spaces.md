@@ -34,10 +34,15 @@ módulos trabajen siempre dentro de un espacio y mantengan aislados sus datos.
 - Cambiar rápidamente entre espacios.
 - Mantener una separación estricta de la información.
 
+## Decisiones adoptadas
+
+- Cada usuario tiene exactamente un espacio personal.
+- Los datos privados pertenecen al espacio personal y los comunes a un espacio
+  compartido.
+
 ## Cuestiones abiertas
 
 - Qué roles estarán disponibles en la primera versión.
 - Cómo se enviarán y aceptarán las invitaciones.
-- Si un usuario podrá tener más de un espacio personal.
 - Cómo se mostrará información de varios espacios en una vista global.
 

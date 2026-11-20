@@ -2,8 +2,10 @@ import { AccountCard } from './components/account-card';
 import { HealthCard } from './components/health-card';
 import { LoginScreen } from './components/login-screen';
 import { ModuleCard } from './components/module-card';
+import { PersonalSpaceCard } from './components/personal-space-card';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
+import { usePersonalSpace } from './hooks/use-personal-space';
 
 const modules = [
   { icon: '✓', title: 'Tareas', description: 'Organiza lo que tienes pendiente.' },
@@ -26,6 +28,7 @@ function LoadingScreen() {
 export function App() {
   const auth = useAuth();
   const health = useHealthCheck();
+  const personalSpace = usePersonalSpace(auth.status === 'authenticated');
 
   if (auth.status === 'checking') {
     return <LoadingScreen />;
@@ -83,19 +86,33 @@ export function App() {
           </div>
         </section>
 
-        <section className="spaces-card">
-          <div aria-hidden="true" className="spaces-illustration">
-            <span className="avatar avatar--back" />
-            <span className="avatar avatar--middle" />
-            <span className="avatar avatar--front" />
-          </div>
-          <div>
-            <h2>Un espacio para cada parte de tu vida</h2>
-            <p>
-              Mantén tus cosas personales separadas y crea espacios comunes para
-              organizarte con otras personas.
-            </p>
-          </div>
+        <section className="section" aria-label="Espacio personal">
+          {personalSpace.space ? (
+            <PersonalSpaceCard
+              busy={personalSpace.busy}
+              error={personalSpace.error}
+              key={personalSpace.space.id}
+              onSave={personalSpace.updateName}
+              space={personalSpace.space}
+            />
+          ) : personalSpace.status === 'error' ? (
+            <div className="personal-space-card" role="alert">
+              <h2>No pudimos cargar tu espacio</h2>
+              <p className="personal-space-card__description">{personalSpace.error}</p>
+              <button
+                className="primary-button"
+                onClick={() => void personalSpace.reload()}
+                type="button"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <div className="personal-space-card personal-space-card--loading" role="status">
+              <span aria-hidden="true" className="spinner" />
+              <p>Preparando tu espacio personal…</p>
+            </div>
+          )}
         </section>
 
         <section className="section" aria-label="Cuenta personal">

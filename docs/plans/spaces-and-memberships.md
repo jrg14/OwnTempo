@@ -1,5 +1,12 @@
 # Plan de implementación: espacios, miembros y permisos
 
+## Estado
+
+En desarrollo. El espacio personal y el modelo común de pertenencia están
+implementados y documentados en
+[`../features/personal-space.md`](../features/personal-space.md). Permanecen
+pendientes los espacios compartidos, las invitaciones y la gestión de miembros.
+
 ## Objetivo
 
 Proporcionar una base común para mantener separados los datos personales y los
@@ -17,8 +24,8 @@ distintos para datos privados y compartidos.
 
 ## Fases
 
-1. Definir espacios personales y compartidos y sus restricciones.
-2. Crear automáticamente el espacio personal al registrar un usuario.
+1. Definir espacios personales y compartidos y sus restricciones. Completada.
+2. Crear automáticamente el espacio personal al registrar un usuario. Completada.
 3. Implementar creación, consulta, edición y abandono de espacios compartidos.
 4. Implementar membresías, invitaciones y aceptación o rechazo.
 5. Incorporar roles iniciales de propietario, administrador y miembro.
