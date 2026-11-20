@@ -9,9 +9,9 @@ endpoints ni tareas de programación.
 | --- | --- |
 | Backend Django y Django REST Framework | `completada` |
 | Base de datos PostgreSQL | `completada` |
-| Entorno local con Podman Compose | `completada` |
+| Entorno local y despliegue doméstico con Docker Compose | `completada` |
 | Comprobación del estado del servicio | `completada` |
-| Base móvil con React Native, Expo y TypeScript | `completada` |
+| PWA con React, Vite y TypeScript | `completada` |
 
 ## Fase 1 — Identidad y espacios
 

@@ -18,12 +18,12 @@ class HealthCheckTests(APITestCase):
     def test_health_check_allows_configured_frontend_origin(self):
         response = self.client.get(
             reverse("health:check"),
-            headers={"origin": "http://localhost:8081"},
+            headers={"origin": "http://localhost:5173"},
         )
 
         self.assertEqual(
             response.headers["access-control-allow-origin"],
-            "http://localhost:8081",
+            "http://localhost:5173",
         )
 
     @patch("apps.health.views.connection.cursor", side_effect=OperationalError)

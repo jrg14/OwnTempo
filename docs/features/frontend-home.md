@@ -1,8 +1,8 @@
-# Inicio de la aplicación móvil
+# Inicio de la PWA
 
 ## Estado
 
-Implementado con React Native, Expo Router y TypeScript.
+Implementado como aplicación web progresiva con React, Vite y TypeScript.
 
 ## Finalidad
 
@@ -16,18 +16,30 @@ aplicación, presenta sus módulos principales y muestra el estado real del back
 - Consulta `GET /api/v1/health/` al abrir la pantalla.
 - Muestra estados de carga, conexión correcta y error.
 - Permite repetir manualmente la comprobación.
-- Adapta la distribución a móvil y web.
+- Adapta la distribución a móvil, tableta y escritorio.
+- Incluye manifiesto web, iconos instalables y service worker con actualización
+  automática de los recursos estáticos.
+- No almacena en caché las respuestas de la API ni promete funcionamiento offline
+  de los datos de negocio.
 
 ## Configuración
 
-La variable pública `EXPO_PUBLIC_API_URL` determina la dirección del backend. Si no
-se define, se utiliza `localhost` en web/iOS y `10.0.2.2` en el emulador Android.
+La variable de compilación `VITE_API_URL` determina la dirección del backend. En
+desarrollo se utiliza `http://localhost:8000` si no se define. En la imagen Docker
+de producción se omite para consumir `/api/` desde el mismo origen que la PWA.
 
 ## Estructura
 
-- `src/app`: rutas y layout de Expo Router.
-- `src/screens`: composición de pantallas.
+- `src/App.tsx`: composición de la pantalla actual.
+- `src/main.tsx`: punto de entrada de React.
 - `src/components`: componentes reutilizables.
 - `src/hooks`: estado y efectos de interfaz.
 - `src/api`: acceso tipado al backend.
-- `src/constants`: tema visual compartido.
+- `src/styles.css`: estilos responsivos y accesibles.
+- `vite.config.ts`: compilación, manifiesto y service worker de la PWA.
+
+## Decisión de plataforma
+
+OwnTempo es web-first y no mantiene clientes nativos Android o iOS. La API REST
+permanece separada para que un cliente nativo pueda añadirse en el futuro sin
+condicionar la implementación actual.

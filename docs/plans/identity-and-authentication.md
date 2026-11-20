@@ -12,9 +12,11 @@ Crear una app `accounts` y definir desde el inicio un modelo `User` basado en
 Django, pero permitirá ampliar el perfil en el futuro sin sustituir el modelo de
 usuario cuando ya existan datos.
 
-Esta decisión debe cerrarse antes de añadir migraciones de negocio. También debe
-elegirse el mecanismo de autenticación de la API móvil, previsiblemente mediante
-tokens de acceso y renovación.
+Esta decisión debe cerrarse antes de añadir migraciones de negocio. La PWA y la
+API se servirán normalmente bajo el mismo origen, por lo que la opción inicial
+será la autenticación por sesión de Django con cookies seguras y protección CSRF.
+Los tokens se posponen hasta que exista un cliente nativo o una integración externa
+que los necesite.
 
 ## Fases
 
@@ -24,6 +26,7 @@ tokens de acceso y renovación.
 4. Añadir un endpoint para consultar y actualizar la cuenta actual.
 5. Proteger por defecto las APIs privadas.
 6. Añadir recuperación y cambio seguro de contraseña.
+7. Configurar cookies, CSRF y HTTPS para el despliegue doméstico.
 
 ## Pruebas mínimas
 
@@ -32,6 +35,8 @@ tokens de acceso y renovación.
 - Acceso anónimo rechazado en recursos privados.
 - Un usuario no puede consultar ni modificar otra cuenta.
 - Contraseñas almacenadas mediante los mecanismos seguros de Django.
+- Cookies de sesión inaccesibles desde JavaScript y operaciones mutables protegidas
+  frente a CSRF.
 
 ## Criterio de finalización
 

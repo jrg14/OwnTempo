@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { fetchHealthStatus, type HealthResponse } from '@/api/health';
+import { fetchHealthStatus, type HealthResponse } from '../api/health';
 
 type HealthState = {
   status: 'checking' | 'online' | 'offline';

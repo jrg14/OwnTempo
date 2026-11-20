@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 export type HealthResponse = {
   status: 'ok' | 'degraded';
   service: string;
@@ -10,14 +8,13 @@ export type HealthResponse = {
   timestamp: string;
 };
 
-const defaultApiUrl = Platform.select({
-  android: 'http://10.0.2.2:8000',
-  default: 'http://localhost:8000',
-});
+const developmentApiUrl = import.meta.env.DEV ? 'http://localhost:8000' : '';
 
 export const API_BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL ?? defaultApiUrl
+  import.meta.env.VITE_API_URL ?? developmentApiUrl
 ).replace(/\/+$/, '');
+
+export const API_DISPLAY_URL = API_BASE_URL || window.location.origin;
 
 function isHealthResponse(value: unknown): value is HealthResponse {
   if (!value || typeof value !== 'object') {

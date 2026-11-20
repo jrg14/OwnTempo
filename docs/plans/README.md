@@ -9,6 +9,7 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 1. [Identidad y autenticación](identity-and-authentication.md)
 2. [Espacios, miembros y permisos](spaces-and-memberships.md)
 3. [Arquitectura modular](modular-architecture.md)
+4. [PWA y despliegue doméstico](pwa-and-home-deployment.md)
 
 Los planes específicos de calendario, tareas, listas de la compra y gastos se
 redactarán antes de comenzar cada módulo, una vez estabilizada la base común.

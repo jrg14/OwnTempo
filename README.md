@@ -190,11 +190,13 @@ La aplicación estará orientada inicialmente a usuarios de habla hispana.
 
 Se diseñará con una estructura que permita incorporar otros idiomas en el futuro.
 
-**Plataformas objetivo:**
-- Android.
-- iOS.
+**Plataforma objetivo:**
+- Aplicación web progresiva (PWA) adaptable a móvil, tableta y escritorio.
 
-Se valorará una versión web o PWA para facilitar las pruebas y la validación inicial del producto.
+La PWA podrá instalarse desde el navegador en la pantalla de inicio de los
+dispositivos compatibles, sin publicar una aplicación nativa. Android e iOS no
+forman parte del alcance actual; si fueran necesarios en el futuro se evaluará un
+cliente específico que reutilice la API existente.
 
 ## 9. Arquitectura tecnológica propuesta
 
@@ -209,14 +211,16 @@ La arquitectura inicial estará basada en tecnologías conocidas y mantenibles.
 ### Base de datos
 - PostgreSQL.
 
-### Frontend móvil
-- React Native.
-- Expo.
+### Frontend PWA
+- React.
 - TypeScript.
+- Vite.
+- Service worker y manifiesto web mediante `vite-plugin-pwa`.
+- Nginx para servir los archivos estáticos y redirigir `/api/` a Django.
 
 ### Herramientas complementarias
 - Git para control de versiones.
-- Docker para facilitar el desarrollo y despliegue.
+- Docker y Docker Compose para facilitar el desarrollo y despliegue doméstico.
 - Herramientas de IA para asistir en la programación.
 - Sistema de suscripciones integrado en una fase posterior.
 
@@ -347,48 +351,62 @@ La aplicación debe proporcionar las herramientas necesarias para que cada perso
 
 **OwnTempo — Tu vida, a tu ritmo.**
 
-## Desarrollo local del backend
+## Desarrollo local con Docker
 
 ### Requisitos
 
-- Podman.
-- Un proveedor de Compose compatible con Podman (`podman compose`).
+- Docker Engine.
+- Docker Compose v2 (`docker compose`).
 
 ### Puesta en marcha
 
 1. Copia `.env.example` a `.env` y ajusta las variables si lo necesitas.
-2. Construye y levanta la API y PostgreSQL:
+2. Construye y levanta PostgreSQL, la API y la PWA:
 
    ```bash
-   podman compose up --build
+   docker compose up --build
    ```
 
-3. Comprueba el estado de la API en `http://localhost:8000/api/v1/health/`.
+3. Abre la PWA en `http://localhost:8080`.
+4. Comprueba la API a través del mismo origen en
+   `http://localhost:8080/api/v1/health/`. El backend también queda accesible
+   directamente en `http://localhost:8000` para desarrollo.
 
-El contenedor del backend aplica las migraciones automáticamente antes de iniciar
-el servidor de desarrollo. Para ejecutar las pruebas:
+El contenedor del backend espera a PostgreSQL, aplica las migraciones, recopila
+los archivos estáticos e inicia Gunicorn. Para ejecutar las pruebas:
 
 ```bash
-podman compose run --rm backend python manage.py test
+docker compose run --rm backend python manage.py test
 ```
 
 Para detener los servicios sin eliminar los datos de PostgreSQL:
 
 ```bash
-podman compose down
+docker compose down
 ```
 
-## Desarrollo local del frontend
+## Desarrollo local de la PWA
 
-El cliente móvil se encuentra en `frontend/` y utiliza React Native, Expo Router y
-TypeScript. Con el backend iniciado, ejecuta:
+El cliente web se encuentra en `frontend/` y utiliza React, TypeScript y Vite. Con
+el backend iniciado, ejecuta:
 
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
-La pantalla inicial consulta automáticamente `GET /api/v1/health/`. Consulta
-`frontend/README.md` para configurar la URL del backend en web, emuladores o un
-dispositivo físico.
+La pantalla inicial consulta automáticamente `GET /api/v1/health/`. En desarrollo,
+`VITE_API_URL` permite indicar otra dirección para el backend; en la imagen Docker
+de producción se usa el mismo origen y Nginx redirige `/api/` al servicio Django.
+Consulta `frontend/README.md` para las instrucciones completas.
+
+## Despliegue doméstico
+
+El navegador debe acceder normalmente a un único origen: la PWA se sirve en `/` y
+la API en `/api/`. PostgreSQL no publica ningún puerto fuera de la red interna de
+Docker. Para acceder desde fuera de la red local se recomienda una VPN o un proxy
+seguro con HTTPS, sin exponer directamente Django ni PostgreSQL a Internet.
+
+Los datos persistentes se guardan en el volumen `postgres_data`. Es necesario
+establecer una política de copias de seguridad antes de utilizar datos reales.
