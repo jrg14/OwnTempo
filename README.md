@@ -78,6 +78,11 @@ Cada usuario podrá seleccionar qué funcionalidades desea utilizar, ocultando a
 - Marcar productos como comprados.
 - Sincronización entre miembros.
 
+**Listas de deseos**
+- Productos, experiencias e ideas personales o compartidas.
+- Priorización y consulta posterior.
+- Separación entre deseos privados y comunes.
+
 **Gestión de tareas**
 - Tareas personales y compartidas.
 - Asignación de responsables.
@@ -265,10 +270,11 @@ La primera versión debe centrarse en validar la utilidad del producto con el m�
 2. Creación y gestión de espacios.
 3. Invitación de miembros.
 4. Listas de compra compartidas.
-5. Gestión de tareas.
-6. Panel principal configurable.
-7. Registro básico de gastos.
-8. Calendario básico.
+5. Listas de deseos personales y compartidas.
+6. Gestión de tareas.
+7. Panel principal configurable.
+8. Registro básico de gastos.
+9. Calendario básico.
 
 Se desarrollarán progresivamente, priorizando la estabilidad y la experiencia de usuario.
 

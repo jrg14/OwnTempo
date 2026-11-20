@@ -8,8 +8,9 @@ import { useHealthCheck } from './hooks/use-health-check';
 
 const modules = [
   { icon: '✓', title: 'Tareas', description: 'Organiza lo que tienes pendiente.' },
+  { icon: '+', title: 'Compras', description: 'Comparte listas sin complicaciones.' },
+  { icon: '♡', title: 'Deseos', description: 'Guarda ideas para más adelante.' },
   { icon: '○', title: 'Calendario', description: 'Ten tus planes siempre a mano.' },
-  { icon: '+', title: 'Compra', description: 'Comparte listas sin complicaciones.' },
   { icon: '€', title: 'Gastos', description: 'Separa lo personal de lo común.' },
 ];
 

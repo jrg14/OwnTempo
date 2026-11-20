@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { useSpaces } from '../hooks/use-spaces';
 import { PersonalSpaceCard } from './personal-space-card';
 import { SharedSpaceCard } from './shared-space-card';
+import { SpaceModulesPanel } from './space-modules-panel';
 
 export function SpacesWorkspace() {
   const spaces = useSpaces();
@@ -138,6 +139,10 @@ export function SpacesWorkspace() {
             onRename={spaces.renameSpace}
             space={spaces.activeSpace}
           />
+        ) : null}
+
+        {spaces.activeSpace ? (
+          <SpaceModulesPanel key={`modules-${spaces.activeSpace.id}`} space={spaces.activeSpace} />
         ) : null}
       </div>
     </div>

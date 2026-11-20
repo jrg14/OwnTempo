@@ -643,6 +643,131 @@ select:focus-visible {
   box-shadow: none;
 }
 
+.space-modules-panel {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #dce7e3;
+  border-radius: 28px;
+  background: #fff;
+}
+
+.module-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.module-panel-heading h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.module-empty-state {
+  margin: 1.25rem 0 0;
+  padding: 0.875rem 1rem;
+  border-radius: 14px;
+  color: #60736e;
+  background: #f4f7f6;
+  line-height: 1.5;
+}
+
+.module-navigation {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.module-navigation a {
+  padding: 0.625rem 0.875rem;
+  border-radius: 999px;
+  color: #fff;
+  background: #1f6b5c;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.module-config-list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-config-list li {
+  padding: 0.875rem 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.875rem;
+  border-bottom: 1px solid #edf2f0;
+}
+
+.module-config-list li:last-child {
+  border-bottom: 0;
+}
+
+.module-config-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #174f45;
+  background: #e9f2ef;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.module-config-copy {
+  min-width: 0;
+}
+
+.module-config-copy > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.module-config-copy p {
+  margin: 0.25rem 0 0;
+  color: #60736e;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.coming-soon-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  color: #8a622d;
+  background: #fff3df;
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.module-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #60736e;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.module-toggle input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: #1f6b5c;
+}
+
+.enabled-label {
+  color: #2f8a66;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
 .shared-space-card {
   padding: 1.5rem;
   background:
@@ -939,7 +1064,8 @@ select:focus-visible {
   }
 
   .workspace-heading,
-  .space-card__heading {
+  .space-card__heading,
+  .module-panel-heading {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -959,6 +1085,15 @@ select:focus-visible {
   .inline-form button,
   .invitation-actions {
     align-self: flex-start;
+  }
+
+  .module-config-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .module-toggle,
+  .enabled-label {
+    grid-column: 2;
   }
 }
 

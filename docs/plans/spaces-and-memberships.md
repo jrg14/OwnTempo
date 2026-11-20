@@ -280,4 +280,4 @@ La feature se considerará completada cuando:
 - Privacidad de elementos individuales dentro de un espacio compartido.
 - Notificaciones push o recordatorios de invitaciones.
 - Activación y desactivación de módulos por espacio.
-- Datos de tareas, compras, calendario o gastos.
+- Datos de tareas, compras, deseos, calendario o gastos.

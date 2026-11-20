@@ -96,4 +96,4 @@ Los espacios compartidos, invitaciones y miembros están documentados en
 
 - Roles avanzados.
 - Activación de módulos por espacio.
-- Recursos de tareas, compras, calendario o gastos.
+- Recursos de tareas, compras, deseos, calendario o gastos.

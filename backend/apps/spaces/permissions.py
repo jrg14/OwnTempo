@@ -17,7 +17,11 @@ class IsSpaceMember(BasePermission):
         ).exists()
 
     def has_object_permission(self, request, view, obj):
-        return Membership.objects.filter(space=obj, user=request.user).exists()
+        space_id = getattr(obj, "space_id", None) or obj.id
+        return Membership.objects.filter(
+            space_id=space_id,
+            user=request.user,
+        ).exists()
 
 
 class IsSpaceOwner(BasePermission):
@@ -31,8 +35,9 @@ class IsSpaceOwner(BasePermission):
         ).exists()
 
     def has_object_permission(self, request, view, obj):
+        space_id = getattr(obj, "space_id", None) or obj.id
         return Membership.objects.filter(
-            space=obj,
+            space_id=space_id,
             user=request.user,
             role=Membership.Role.OWNER,
         ).exists()

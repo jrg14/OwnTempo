@@ -28,9 +28,9 @@ endpoints ni tareas de programación.
 
 | Funcionalidad | Estado |
 | --- | --- |
-| Catálogo de módulos disponibles | `planificada` |
-| Activación de módulos por espacio | `planificada` |
-| Navegación entre espacios y módulos | `planificada` |
+| Catálogo de módulos disponibles | `completada` |
+| Activación de módulos por espacio | `completada` |
+| Navegación entre espacios y módulos | `completada` |
 | Panel inicial configurable | `propuesta` |
 
 ## Fase 3 — Organización cotidiana
@@ -39,6 +39,7 @@ endpoints ni tareas de programación.
 | --- | --- |
 | Módulo de tareas personales y compartidas | `planificada` |
 | Módulo de listas de la compra | `planificada` |
+| Módulo de lista de deseos | `planificada` |
 
 ## Fase 4 — Planificación y economía
 

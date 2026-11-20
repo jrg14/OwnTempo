@@ -21,6 +21,9 @@ def ensure_personal_space(user):
         space=space,
         defaults={"role": Membership.Role.OWNER},
     )
+    from apps.modules.services import ensure_space_modules
+
+    ensure_space_modules(space)
     return space
 
 
@@ -36,6 +39,9 @@ def create_shared_space(user, name):
         space=space,
         role=Membership.Role.OWNER,
     )
+    from apps.modules.services import ensure_space_modules
+
+    ensure_space_modules(space)
     return space
 
 
