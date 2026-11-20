@@ -1,5 +1,8 @@
+import { AccountCard } from './components/account-card';
 import { HealthCard } from './components/health-card';
+import { LoginScreen } from './components/login-screen';
 import { ModuleCard } from './components/module-card';
+import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
 const modules = [
@@ -9,8 +12,30 @@ const modules = [
   { icon: '€', title: 'Gastos', description: 'Separa lo personal de lo común.' },
 ];
 
+function LoadingScreen() {
+  return (
+    <main className="auth-page">
+      <div className="loading-card" role="status">
+        <span aria-hidden="true" className="spinner" />
+        <p>Preparando OwnTempo…</p>
+      </div>
+    </main>
+  );
+}
+
 export function App() {
+  const auth = useAuth();
   const health = useHealthCheck();
+
+  if (auth.status === 'checking') {
+    return <LoadingScreen />;
+  }
+
+  if (auth.status === 'anonymous' || !auth.user) {
+    return <LoginScreen busy={auth.busy} error={auth.error} onLogin={auth.login} />;
+  }
+
+  const displayName = auth.user.first_name || auth.user.username;
 
   return (
     <main>
@@ -20,7 +45,17 @@ export function App() {
             <span />
           </span>
           <span className="brand">OwnTempo</span>
-          <span className="preview-badge">PWA · PRIMERA VERSIÓN</span>
+          <div className="session-actions">
+            <span>Hola, {displayName}</span>
+            <button
+              className="text-button"
+              disabled={auth.busy}
+              onClick={() => void auth.logout()}
+              type="button"
+            >
+              Salir
+            </button>
+          </div>
         </header>
 
         <section className="hero">
@@ -61,6 +96,16 @@ export function App() {
               organizarte con otras personas.
             </p>
           </div>
+        </section>
+
+        <section className="section" aria-label="Cuenta personal">
+          <AccountCard
+            busy={auth.busy}
+            error={auth.error}
+            key={auth.user.id}
+            onSave={auth.updateAccount}
+            user={auth.user}
+          />
         </section>
 
         <section className="section" aria-label="Estado técnico">

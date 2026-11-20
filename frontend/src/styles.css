@@ -31,7 +31,8 @@ select {
 }
 
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible {
   outline: 3px solid #e6a75a;
   outline-offset: 3px;
 }
@@ -70,6 +71,33 @@ a:focus-visible {
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.025rem;
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #60736e;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.text-button {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  color: #1f6b5c;
+  background: #e9f2ef;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.text-button:hover:not(:disabled) {
+  background: #dcebe6;
+}
+
+.text-button:disabled {
+  opacity: 0.5;
 }
 
 .preview-badge {
@@ -257,6 +285,202 @@ a:focus-visible {
   box-shadow: 0 10px 24px rgb(18 60 50 / 8%);
 }
 
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(230 167 90 / 30%), transparent 24rem),
+    #f4f7f6;
+}
+
+.auth-shell {
+  width: min(100%, 520px);
+}
+
+.login-card,
+.loading-card,
+.account-card {
+  border: 1px solid #dce7e3;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgb(18 60 50 / 10%);
+}
+
+.login-card {
+  overflow: hidden;
+}
+
+.login-card__intro {
+  padding: 2rem;
+  color: #fff;
+  background: #174f45;
+}
+
+.login-card__intro .eyebrow {
+  color: #bbd8d0;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.06rem;
+}
+
+.login-card__intro > p:last-child {
+  margin: 1rem 0 0;
+  color: #ddece8;
+  line-height: 1.5;
+}
+
+.form-stack,
+.account-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-stack {
+  padding: 2rem;
+}
+
+.form-stack label,
+.account-form label {
+  margin-bottom: 0.375rem;
+  color: #18302b;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.form-stack label:not(:first-child) {
+  margin-top: 1rem;
+}
+
+.form-stack input,
+.account-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #cbdad5;
+  border-radius: 12px;
+  color: #18302b;
+  background: #fff;
+}
+
+.form-stack input:focus,
+.account-form input:focus {
+  border-color: #1f6b5c;
+  outline: 3px solid rgb(31 107 92 / 14%);
+}
+
+.primary-button {
+  align-self: flex-start;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: #1f6b5c;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #174f45;
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.form-error,
+.form-success {
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.875rem;
+  border-radius: 12px;
+  line-height: 1.45;
+}
+
+.form-error {
+  color: #8f3535;
+  background: #fbeaea;
+}
+
+.form-success {
+  color: #174f45;
+  background: #e3f4ec;
+}
+
+.admin-note {
+  margin: 0;
+  padding: 0 2rem 2rem;
+  color: #60736e;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.loading-card {
+  min-width: min(100%, 280px);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  color: #1f6b5c;
+  font-weight: 700;
+}
+
+.loading-card p {
+  margin: 0;
+}
+
+.account-card {
+  padding: 1.5rem;
+}
+
+.account-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-card__heading h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.account-avatar {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  flex: 0 0 46px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #1f6b5c;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.account-form {
+  margin-top: 1.5rem;
+}
+
+.form-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-grid > div {
+  display: flex;
+  flex-direction: column;
+}
+
 .health-card__heading,
 .health-card__footer {
   display: flex;
@@ -413,6 +637,10 @@ a:focus-visible {
     text-align: center;
   }
 
+  .session-actions > span {
+    display: none;
+  }
+
   .hero {
     min-height: 360px;
     padding: 1.25rem;
@@ -434,6 +662,19 @@ a:focus-visible {
 
   .health-card button {
     align-self: flex-start;
+  }
+
+  .login-card__intro,
+  .form-stack {
+    padding: 1.5rem;
+  }
+
+  .admin-note {
+    padding: 0 1.5rem 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

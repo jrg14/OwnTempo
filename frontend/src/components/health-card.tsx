@@ -1,4 +1,5 @@
-import { API_DISPLAY_URL, type HealthResponse } from '../api/health';
+import { API_DISPLAY_URL } from '../api/config';
+import type { HealthResponse } from '../api/health';
 
 type HealthCardProps = {
   status: 'checking' | 'online' | 'offline';

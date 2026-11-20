@@ -150,7 +150,7 @@ Durante el primer acceso, la aplicación guiará al usuario mediante una configu
 
 El proceso podrá incluir:
 
-1. Creación de cuenta.
+1. Alta de usuario por parte del administrador e inicio de sesión.
 2. Selección del tipo de uso: individual, pareja, familia u otros.
 3. Creación del primer espacio.
 4. Selección de los módulos deseados.
@@ -261,7 +261,7 @@ La primera versión debe centrarse en validar la utilidad del producto con el m�
 
 ### Funcionalidades prioritarias
 
-1. Registro e inicio de sesión.
+1. Alta de usuarios mediante Django Admin e inicio de sesión desde la PWA.
 2. Creación y gestión de espacios.
 3. Invitación de miembros.
 4. Listas de compra compartidas.
@@ -400,6 +400,23 @@ La pantalla inicial consulta automáticamente `GET /api/v1/health/`. En desarrol
 `VITE_API_URL` permite indicar otra dirección para el backend; en la imagen Docker
 de producción se usa el mismo origen y Nginx redirige `/api/` al servicio Django.
 Consulta `frontend/README.md` para las instrucciones completas.
+
+### Primer administrador y usuarios
+
+OwnTempo no ofrece registro público. Después de preparar una base de datos nueva,
+crea el administrador inicial:
+
+```bash
+docker compose run --rm backend python manage.py createsuperuser
+```
+
+Con los servicios iniciados, abre `http://localhost:8080/admin/` para crear,
+desactivar o cambiar la contraseña de los usuarios domésticos. Estos usuarios
+podrán iniciar sesión en la PWA y editar su username, nombre y apellidos.
+
+La introducción de `AUTH_USER_MODEL` requiere una base de datos nueva. Si el
+volumen de desarrollo anterior ya tenía migraciones aplicadas, respalda primero
+cualquier dato necesario y recrea el volumen antes de arrancar esta versión.
 
 ## Despliegue doméstico
 

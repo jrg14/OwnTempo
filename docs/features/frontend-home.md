@@ -8,6 +8,8 @@ Implementado como aplicación web progresiva con React, Vite y TypeScript.
 
 Ofrece la primera pantalla de OwnTempo. Explica de forma breve la propuesta de la
 aplicación, presenta sus módulos principales y muestra el estado real del backend.
+Solo se muestra después de comprobar que existe una sesión válida; en caso
+contrario, la PWA presenta la pantalla de acceso.
 
 ## Comportamiento
 

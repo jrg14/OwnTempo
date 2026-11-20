@@ -6,7 +6,7 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 
 ## Planes iniciales
 
-1. [Identidad y autenticación](identity-and-authentication.md)
+1. [Usuarios y autenticación doméstica](identity-and-authentication.md)
 2. [Espacios, miembros y permisos](spaces-and-memberships.md)
 3. [Arquitectura modular](modular-architecture.md)
 4. [PWA y despliegue doméstico](pwa-and-home-deployment.md)

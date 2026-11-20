@@ -17,8 +17,9 @@ endpoints ni tareas de programación.
 
 | Funcionalidad | Estado |
 | --- | --- |
-| Registro e identificación de usuarios | `planificada` |
-| Gestión de la cuenta personal | `planificada` |
+| Alta y gestión de usuarios mediante Django Admin | `completada` |
+| Inicio y cierre de sesión desde la PWA | `completada` |
+| Consulta y edición de la cuenta actual | `completada` |
 | Espacio personal del usuario | `planificada` |
 | Creación y gestión de espacios compartidos | `planificada` |
 | Invitaciones, miembros, roles y permisos | `planificada` |
