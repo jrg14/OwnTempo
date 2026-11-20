@@ -7,14 +7,7 @@ import {
 } from '../api/modules';
 import type { Space } from '../api/spaces';
 import { spaceErrorMessage } from '../hooks/use-spaces';
-
-const moduleIcons: Record<SpaceModuleConfiguration['icon'], string> = {
-  check: '✓',
-  cart: '+',
-  heart: '♡',
-  calendar: '○',
-  wallet: '€',
-};
+import { Icon } from './icon';
 
 type SpaceModulesPanelProps = {
   space: Space;
@@ -70,13 +63,13 @@ export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
   );
 
   return (
-    <section className="space-modules-panel" aria-labelledby="space-modules-title">
+    <section
+      className="space-modules-panel"
+      id="space-modules"
+      aria-labelledby="space-modules-title"
+    >
       <div className="module-panel-heading">
-        <div>
-          <p className="eyebrow">FUNCIONALIDADES</p>
-          <h3 id="space-modules-title">Módulos de {space.name}</h3>
-        </div>
-        {isOwner ? <span className="role-badge">Configurable</span> : null}
+        <h2 id="space-modules-title">¿Qué quieres organizar hoy?</h2>
       </div>
 
       {error ? <p className="form-error" role="alert">{error}</p> : null}
@@ -89,7 +82,14 @@ export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
             <nav className="module-navigation" aria-label="Módulos activos">
               {navigableModules.map((configuration) => (
                 <a href={configuration.route} key={configuration.key}>
-                  {configuration.name}
+                  <span className="module-navigation__icon">
+                    <Icon name={configuration.icon} />
+                  </span>
+                  <span className="module-navigation__copy">
+                    <strong>{configuration.name}</strong>
+                    <small>{configuration.description}</small>
+                  </span>
+                  <span className="module-navigation__action">Abrir</span>
                 </a>
               ))}
             </nav>
@@ -100,37 +100,41 @@ export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
             </p>
           )}
 
-          <ul className="module-config-list">
-            {modules.map((configuration) => (
-              <li key={configuration.key}>
-                <span aria-hidden="true" className="module-config-icon">
-                  {moduleIcons[configuration.icon]}
-                </span>
-                <div className="module-config-copy">
-                  <div>
-                    <strong>{configuration.name}</strong>
-                    {!configuration.available ? (
-                      <span className="coming-soon-badge">Próximamente</span>
-                    ) : null}
-                  </div>
-                  <p>{configuration.description}</p>
-                </div>
-                {isOwner ? (
-                  <label className="module-toggle">
-                    <input
-                      checked={configuration.enabled}
-                      disabled={busyKey === configuration.key}
-                      onChange={() => void toggle(configuration)}
-                      type="checkbox"
-                    />
-                    <span>{configuration.enabled ? 'Activo' : 'Inactivo'}</span>
-                  </label>
-                ) : configuration.enabled ? (
-                  <span className="enabled-label">Activo</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          {isOwner ? (
+            <details className="module-settings">
+              <summary>
+                <span><Icon name="settings" />Configurar módulos</span>
+                <Icon name="chevron" />
+              </summary>
+              <ul className="module-config-list">
+                {modules.map((configuration) => (
+                  <li key={configuration.key}>
+                    <span aria-hidden="true" className="module-config-icon">
+                      <Icon name={configuration.icon} />
+                    </span>
+                    <div className="module-config-copy">
+                      <div>
+                        <strong>{configuration.name}</strong>
+                        {!configuration.available ? (
+                          <span className="coming-soon-badge">Próximamente</span>
+                        ) : null}
+                      </div>
+                      <p>{configuration.description}</p>
+                    </div>
+                    <label className="module-toggle">
+                      <input
+                        checked={configuration.enabled}
+                        disabled={busyKey === configuration.key}
+                        onChange={() => void toggle(configuration)}
+                        type="checkbox"
+                      />
+                      <span>{configuration.enabled ? 'Activo' : 'Inactivo'}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </>
       )}
     </section>

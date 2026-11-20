@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 
 import { useSpaces } from '../hooks/use-spaces';
+import { Icon } from './icon';
 import { PersonalSpaceCard } from './personal-space-card';
 import { SharedSpaceCard } from './shared-space-card';
 import { SpaceModulesPanel } from './space-modules-panel';
@@ -36,27 +37,45 @@ export function SpacesWorkspace() {
   }
 
   return (
-    <div className="spaces-workspace">
-      <div className="workspace-heading">
-        <div>
-          <p className="eyebrow">TUS CONTEXTOS</p>
-          <h2>Espacios</h2>
-          <p className="workspace-description">
-            Separa lo privado y comparte solo lo que pertenezca a un espacio común.
-          </p>
+    <div className="spaces-workspace workspace-home">
+      <div className="active-space-header">
+        <div className="active-space-copy">
+          <h1>{spaces.activeSpace?.name ?? 'Tus espacios'}</h1>
+          {spaces.activeSpace ? (
+            <span className="space-kind-label">
+              <Icon name={spaces.activeSpace.kind === 'personal' ? 'home' : 'users'} />
+              {spaces.activeSpace.kind === 'personal'
+                ? 'Tu espacio privado'
+                : 'Espacio compartido'}
+            </span>
+          ) : null}
         </div>
-        {spaces.invitations.length > 0 ? (
-          <span className="invitation-count">
-            {spaces.invitations.length} pendiente{spaces.invitations.length === 1 ? '' : 's'}
-          </span>
-        ) : null}
+        <div className="active-space-select">
+          <label htmlFor="active-space">Cambiar espacio</label>
+          <select
+            id="active-space"
+            onChange={(event) => spaces.selectSpace(Number(event.target.value))}
+            value={spaces.activeSpaceId ?? ''}
+          >
+            {spaces.spaces.map((space) => (
+              <option key={space.id} value={space.id}>
+                {space.name} {space.kind === 'personal' ? '(personal)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {spaces.error ? <p className="form-error" role="alert">{spaces.error}</p> : null}
 
       {spaces.invitations.length > 0 ? (
         <section className="invitation-inbox" aria-labelledby="invitation-title">
-          <h3 id="invitation-title">Invitaciones</h3>
+          <div className="invitation-title-row">
+            <h2 id="invitation-title">Tienes una invitación</h2>
+            <span className="invitation-count" aria-label={`${spaces.invitations.length} invitaciones pendientes`}>
+              {spaces.invitations.length}
+            </span>
+          </div>
           <ul>
             {spaces.invitations.map((invitation) => (
               <li key={invitation.id}>
@@ -88,62 +107,54 @@ export function SpacesWorkspace() {
         </section>
       ) : null}
 
-      <div className="space-toolbar">
-        <div>
-          <label htmlFor="active-space">Espacio activo</label>
-          <select
-            id="active-space"
-            onChange={(event) => spaces.selectSpace(Number(event.target.value))}
-            value={spaces.activeSpaceId ?? ''}
-          >
-            {spaces.spaces.map((space) => (
-              <option key={space.id} value={space.id}>
-                {space.name} {space.kind === 'personal' ? '(personal)' : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <form className="create-space-form" onSubmit={(event) => void create(event)}>
-          <label htmlFor="new-space-name">Nuevo espacio compartido</label>
-          <div className="inline-form">
-            <input
-              id="new-space-name"
-              maxLength={120}
-              onChange={(event) => setNewSpaceName(event.target.value)}
-              placeholder="Casa, familia, viaje…"
-              required
-              value={newSpaceName}
-            />
-            <button className="secondary-button" disabled={spaces.busy} type="submit">
-              Crear
-            </button>
-          </div>
-        </form>
-      </div>
-
       <div className="active-space-panel">
-        {spaces.activeSpace?.kind === 'personal' ? (
-          <PersonalSpaceCard
-            busy={spaces.busy}
-            error={null}
-            key={spaces.activeSpace.id}
-            onSave={(name) => spaces.renameSpace(spaces.activeSpace!, name)}
-            space={spaces.activeSpace}
-          />
-        ) : spaces.activeSpace ? (
-          <SharedSpaceCard
-            busy={spaces.busy}
-            key={spaces.activeSpace.id}
-            onLeave={spaces.leave}
-            onRename={spaces.renameSpace}
-            space={spaces.activeSpace}
-          />
-        ) : null}
-
         {spaces.activeSpace ? (
           <SpaceModulesPanel key={`modules-${spaces.activeSpace.id}`} space={spaces.activeSpace} />
         ) : null}
+
+        <details className="space-management" id="space-management">
+          <summary>
+            <span><Icon name="users" />Gestionar espacios</span>
+            <Icon name="chevron" />
+          </summary>
+          <div className="space-management__content">
+            {spaces.activeSpace?.kind === 'personal' ? (
+              <PersonalSpaceCard
+                busy={spaces.busy}
+                error={spaces.error}
+                key={spaces.activeSpace.id}
+                onSave={(name) => spaces.renameSpace(spaces.activeSpace!, name)}
+                space={spaces.activeSpace}
+              />
+            ) : spaces.activeSpace ? (
+              <SharedSpaceCard
+                busy={spaces.busy}
+                key={spaces.activeSpace.id}
+                onLeave={spaces.leave}
+                onRename={spaces.renameSpace}
+                space={spaces.activeSpace}
+              />
+            ) : null}
+
+            <form className="create-space-form" onSubmit={(event) => void create(event)}>
+              <label htmlFor="new-space-name">Crear un espacio compartido</label>
+              <p>Para una casa, familia, viaje o cualquier plan en común.</p>
+              <div className="inline-form">
+                <input
+                  id="new-space-name"
+                  maxLength={120}
+                  onChange={(event) => setNewSpaceName(event.target.value)}
+                  placeholder="Casa, familia, viaje…"
+                  required
+                  value={newSpaceName}
+                />
+                <button className="secondary-button" disabled={spaces.busy} type="submit">
+                  Crear
+                </button>
+              </div>
+            </form>
+          </div>
+        </details>
       </div>
     </div>
   );

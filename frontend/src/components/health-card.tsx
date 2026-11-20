@@ -17,7 +17,7 @@ const statusContent = {
   },
   online: {
     label: 'Todos los sistemas operativos',
-    detail: 'Django y PostgreSQL responden correctamente.',
+    detail: 'OwnTempo está conectado y listo para usar.',
     className: 'is-online',
   },
   offline: {
@@ -44,8 +44,7 @@ export function HealthCard({
     <article className="health-card">
       <div className="health-card__heading">
         <div>
-          <p className="eyebrow">ESTADO DEL SERVICIO</p>
-          <h2>Conexión con OwnTempo</h2>
+          <h2>Estado de OwnTempo</h2>
         </div>
         <span
           aria-label={content.label}
@@ -60,10 +59,13 @@ export function HealthCard({
       <p className="health-card__detail">{error ?? content.detail}</p>
 
       {data ? (
-        <div className="health-card__checks">
-          <span>Django · {data.checks.django}</span>
-          <span>PostgreSQL · {data.checks.database}</span>
-        </div>
+        <details className="technical-details">
+          <summary>Ver detalles técnicos</summary>
+          <div className="health-card__checks">
+            <span>Django · {data.checks.django}</span>
+            <span>PostgreSQL · {data.checks.database}</span>
+          </div>
+        </details>
       ) : null}
 
       <footer className="health-card__footer">

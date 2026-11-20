@@ -146,7 +146,6 @@ export function SharedSpaceCard({
     <section className="shared-space-card" aria-labelledby="shared-space-title">
       <div className="space-card__heading">
         <div>
-          <p className="eyebrow">ESPACIO COMPARTIDO</p>
           <h2 id="shared-space-title">{space.name}</h2>
         </div>
         <span className="role-badge">

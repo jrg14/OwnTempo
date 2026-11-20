@@ -35,7 +35,6 @@ export function AccountCard({ busy, error, user, onSave }: AccountCardProps) {
     <section className="account-card" aria-labelledby="account-title">
       <div className="account-card__heading">
         <div>
-          <p className="eyebrow">MI CUENTA</p>
           <h2 id="account-title">Datos personales</h2>
         </div>
         <span aria-hidden="true" className="account-avatar">

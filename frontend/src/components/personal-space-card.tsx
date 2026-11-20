@@ -34,8 +34,7 @@ export function PersonalSpaceCard({
     <section className="personal-space-card" aria-labelledby="personal-space-title">
       <div className="personal-space-card__heading">
         <div>
-          <p className="eyebrow">ESPACIO PERSONAL</p>
-          <h2 id="personal-space-title">Tu contexto privado</h2>
+          <h2 id="personal-space-title">Tu espacio privado</h2>
         </div>
         <span aria-hidden="true" className="privacy-badge">Solo tú</span>
       </div>

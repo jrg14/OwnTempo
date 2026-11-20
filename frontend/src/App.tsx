@@ -1,18 +1,14 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { AccountCard } from './components/account-card';
 import { HealthCard } from './components/health-card';
+import { Icon } from './components/icon';
 import { LoginScreen } from './components/login-screen';
-import { ModuleCard } from './components/module-card';
 import { SpacesWorkspace } from './components/spaces-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-const modules = [
-  { icon: '✓', title: 'Tareas', description: 'Organiza lo que tienes pendiente.' },
-  { icon: '+', title: 'Compras', description: 'Comparte listas sin complicaciones.' },
-  { icon: '♡', title: 'Deseos', description: 'Guarda ideas para más adelante.' },
-  { icon: '○', title: 'Calendario', description: 'Ten tus planes siempre a mano.' },
-  { icon: '€', title: 'Gastos', description: 'Separa lo personal de lo común.' },
-];
+type AppView = 'home' | 'account' | 'diagnostics';
 
 function LoadingScreen() {
   return (
@@ -28,6 +24,50 @@ function LoadingScreen() {
 export function App() {
   const auth = useAuth();
   const health = useHealthCheck();
+  const [activeView, setActiveView] = useState<AppView>('home');
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const profileButton = profileButtonRef.current;
+    const handleMenuKeyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setProfileMenuOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const menu = document.getElementById('profile-menu');
+      const focusable = Array.from(
+        menu?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]') ?? [],
+      );
+      const first = focusable[0];
+      const last = focusable.at(-1);
+
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleMenuKeyboard);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleMenuKeyboard);
+      profileButton?.focus();
+    };
+  }, [profileMenuOpen]);
 
   if (auth.status === 'checking') {
     return <LoadingScreen />;
@@ -39,78 +79,164 @@ export function App() {
 
   const displayName = auth.user.first_name || auth.user.username;
 
+  const openView = (view: Exclude<AppView, 'home'>) => {
+    setActiveView(view);
+    setProfileMenuOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const goHome = () => {
+    setActiveView('home');
+    window.scrollTo({ top: 0 });
+  };
+
   return (
-    <main>
-      <div className="page-shell">
-        <header className="brand-row">
+    <main className="app-page">
+      <div className="app-shell">
+        <header className="brand-row app-header">
           <span aria-hidden="true" className="logo-mark">
             <span />
           </span>
           <span className="brand">OwnTempo</span>
           <div className="session-actions">
-            <span>Hola, {displayName}</span>
+            <span className="welcome-copy">Hola, {displayName}</span>
             <button
-              className="text-button"
-              disabled={auth.busy}
-              onClick={() => void auth.logout()}
+              aria-controls="profile-menu"
+              aria-expanded={profileMenuOpen}
+              aria-label={`Abrir menú de ${displayName}`}
+              className="header-avatar"
+              onClick={() => setProfileMenuOpen(true)}
+              ref={profileButtonRef}
               type="button"
             >
-              Salir
+              {displayName.slice(0, 1).toUpperCase()}
             </button>
           </div>
         </header>
 
-        <section className="hero">
-          <span aria-hidden="true" className="hero-circle hero-circle--large" />
-          <span aria-hidden="true" className="hero-circle hero-circle--small" />
-          <div className="hero__copy">
-            <p className="hero__eyebrow">TU VIDA, A TU RITMO</p>
-            <h1>Todo lo importante, en un solo lugar.</h1>
-            <p>
-              Organiza tu día a día y comparte solo lo que quieras con tu pareja,
-              familia o compañeros de piso.
-            </p>
-          </div>
-        </section>
+        {activeView === 'home' ? (
+          <>
+            <section id="home" aria-label="Inicio">
+              <SpacesWorkspace />
+            </section>
+            <footer className="page-footer">OwnTempo · A tu ritmo</footer>
+          </>
+        ) : null}
 
-        <section className="section" aria-labelledby="modules-title">
-          <h2 id="modules-title">Una aplicación que se adapta a ti</h2>
-          <p className="section__description">
-            Activa los módulos que necesites y úsalos de forma personal o compartida.
-          </p>
-          <div className="module-grid">
-            {modules.map((module) => (
-              <ModuleCard key={module.title} {...module} />
-            ))}
-          </div>
-        </section>
+        {activeView === 'account' ? (
+          <section className="app-subpage" aria-labelledby="account-page-title">
+            <button className="back-button" onClick={goHome} type="button">
+              <Icon name="arrow-left" />
+              Volver al inicio
+            </button>
+            <header className="subpage-heading">
+              <h1 id="account-page-title">Cuenta y ajustes</h1>
+              <p>Actualiza la información que utilizas en OwnTempo.</p>
+            </header>
+            <AccountCard
+              busy={auth.busy}
+              error={auth.error}
+              key={auth.user.id}
+              onSave={auth.updateAccount}
+              user={auth.user}
+            />
+          </section>
+        ) : null}
 
-        <section className="section" aria-label="Espacios">
-          <SpacesWorkspace />
-        </section>
-
-        <section className="section" aria-label="Cuenta personal">
-          <AccountCard
-            busy={auth.busy}
-            error={auth.error}
-            key={auth.user.id}
-            onSave={auth.updateAccount}
-            user={auth.user}
-          />
-        </section>
-
-        <section className="section" aria-label="Estado técnico">
-          <HealthCard
-            checkedAt={health.checkedAt}
-            data={health.data}
-            error={health.error}
-            onRetry={() => void health.refresh()}
-            status={health.status}
-          />
-        </section>
-
-        <footer className="page-footer">OwnTempo · Construyendo con calma</footer>
+        {activeView === 'diagnostics' ? (
+          <section className="app-subpage" aria-labelledby="diagnostics-page-title">
+            <button className="back-button" onClick={goHome} type="button">
+              <Icon name="arrow-left" />
+              Volver al inicio
+            </button>
+            <header className="subpage-heading">
+              <h1 id="diagnostics-page-title">Ayuda y diagnóstico</h1>
+              <p>
+                Comprueba el estado de OwnTempo y vuelve a intentarlo si hay algún
+                problema.
+              </p>
+            </header>
+            <HealthCard
+              checkedAt={health.checkedAt}
+              data={health.data}
+              error={health.error}
+              onRetry={() => void health.refresh()}
+              status={health.status}
+            />
+          </section>
+        ) : null}
       </div>
+
+      {activeView === 'home' ? (
+        <nav className="bottom-navigation" aria-label="Navegación principal">
+          <a href="#home"><Icon name="home" /><span>Inicio</span></a>
+          <a href="#space-modules"><Icon name="activity" /><span>Módulos</span></a>
+          <a href="#space-management"><Icon name="users" /><span>Gestionar</span></a>
+        </nav>
+      ) : null}
+
+      {profileMenuOpen ? (
+        <div className="profile-menu-layer">
+          <button
+            aria-label="Cerrar menú"
+            className="profile-menu-backdrop"
+            onClick={() => setProfileMenuOpen(false)}
+            type="button"
+          />
+          <aside
+            aria-label={`Menú de ${displayName}`}
+            aria-modal="true"
+            className="profile-menu"
+            id="profile-menu"
+            role="dialog"
+          >
+            <header className="profile-menu__header">
+              <span className="profile-menu__avatar">
+                {displayName.slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <strong>{displayName}</strong>
+                <span>@{auth.user.username}</span>
+              </div>
+              <button
+                aria-label="Cerrar menú"
+                autoFocus
+                className="profile-menu__close"
+                onClick={() => setProfileMenuOpen(false)}
+                type="button"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+
+            <nav className="profile-menu__navigation" aria-label="Opciones personales">
+              <button onClick={() => openView('account')} type="button">
+                <span className="profile-menu__item-icon"><Icon name="settings" /></span>
+                <span>
+                  <strong>Cuenta y ajustes</strong>
+                  <small>Datos personales y preferencias</small>
+                </span>
+                <Icon name="arrow-right" />
+              </button>
+              <button onClick={() => openView('diagnostics')} type="button">
+                <span className="profile-menu__item-icon"><Icon name="activity" /></span>
+                <span>
+                  <strong>Ayuda y diagnóstico</strong>
+                  <small>Estado y conexión de OwnTempo</small>
+                </span>
+                <Icon name="arrow-right" />
+              </button>
+            </nav>
+
+            <footer className="profile-menu__footer">
+              <button disabled={auth.busy} onClick={() => void auth.logout()} type="button">
+                <Icon name="logout" />
+                {auth.busy ? 'Cerrando sesión…' : 'Cerrar sesión'}
+              </button>
+            </footer>
+          </aside>
+        </div>
+      ) : null}
     </main>
   );
 }
