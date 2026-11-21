@@ -11,7 +11,9 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 3. [Espacios, miembros y permisos](spaces-and-memberships.md)
 4. [Arquitectura modular](modular-architecture.md)
 5. [PWA y despliegue doméstico](pwa-and-home-deployment.md)
+6. [Módulo de tareas](tasks.md)
 
-Los planes específicos de calendario, tareas, listas de la compra y gastos se
-redactarán antes de comenzar cada módulo, una vez estabilizada la base común.
+Los planes específicos de calendario, listas de la compra, lista de deseos y
+gastos se redactarán antes de comenzar cada módulo, una vez estabilizada la base
+común.
 

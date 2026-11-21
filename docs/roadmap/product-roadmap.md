@@ -37,7 +37,7 @@ endpoints ni tareas de programación.
 
 | Funcionalidad | Estado |
 | --- | --- |
-| Módulo de tareas personales y compartidas | `planificada` |
+| Módulo de tareas personales y compartidas | `completada` |
 | Módulo de listas de la compra | `planificada` |
 | Módulo de lista de deseos | `planificada` |
 

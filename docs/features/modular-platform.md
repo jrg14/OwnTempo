@@ -2,8 +2,8 @@
 
 ## Estado
 
-Implementada y verificada. Los módulos de negocio todavía no están disponibles;
-la plataforma los presenta como próximos hasta implementar cada feature.
+Implementada y verificada. `tasks` es el primer módulo de negocio disponible;
+la plataforma presenta los demás como próximos hasta implementar cada feature.
 
 ## Catálogo
 
@@ -28,8 +28,9 @@ La app `apps.modules` define `SpaceModule`, con:
 - Fechas de creación y actualización.
 
 La combinación espacio y clave es única y la base de datos rechaza claves fuera
-del catálogo. Los cinco módulos comienzan activos, pero `available=false` impide
-abrirlos hasta que se implemente su funcionalidad.
+del catálogo. Los cinco módulos comienzan activos. `tasks` tiene
+`available=true`; en los demás, `available=false` impide abrirlos hasta que se
+implemente su funcionalidad.
 
 Todos los espacios existentes reciben sus configuraciones mediante migración.
 Los espacios personales y compartidos nuevos las reciben dentro de su servicio
@@ -81,7 +82,7 @@ Dentro del espacio activo se muestra:
 - Etiqueta `Próximamente` para features no implementadas.
 - Controles de activación únicamente para propietarios.
 - Navegación solo para módulos activos y disponibles.
-- Estado vacío mientras no haya módulos que se puedan abrir.
+- Estado vacío si no hay módulos activos que se puedan abrir.
 
 La pantalla promocional también refleja los cinco módulos del catálogo inicial.
 
@@ -98,7 +99,7 @@ La pantalla promocional también refleja los cinco módulos del catálogo inicia
 
 ## Fuera de alcance
 
-- Modelos y endpoints de tareas, compras, deseos, calendario o gastos.
+- Modelos y endpoints de compras, deseos, calendario o gastos.
 - Panel inicial configurable.
 - Activación distinta para miembros del mismo espacio.
 - Dependencias entre módulos.

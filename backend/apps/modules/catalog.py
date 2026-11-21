@@ -19,6 +19,8 @@ MODULE_CATALOG = (
         description="Organiza tareas personales o compartidas.",
         icon="check",
         route_segment="tasks",
+        app_label="tasks",
+        available=True,
     ),
     ModuleDefinition(
         key="shopping",

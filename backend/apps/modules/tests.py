@@ -40,7 +40,11 @@ class ModuleCatalogTests(APITestCase):
             tuple(module["key"] for module in response.data),
             MODULE_KEYS,
         )
-        self.assertTrue(all(module["available"] is False for module in response.data))
+        availability = {module["key"]: module["available"] for module in response.data}
+        self.assertTrue(availability["tasks"])
+        self.assertTrue(
+            all(not available for key, available in availability.items() if key != "tasks")
+        )
 
 
 class SpaceModuleModelTests(APITestCase):
@@ -137,7 +141,11 @@ class SpaceModuleApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(tuple(item["key"] for item in response.data), MODULE_KEYS)
         self.assertTrue(all(item["enabled"] for item in response.data))
-        self.assertTrue(all(item["available"] is False for item in response.data))
+        availability = {item["key"]: item["available"] for item in response.data}
+        self.assertTrue(availability["tasks"])
+        self.assertTrue(
+            all(not available for key, available in availability.items() if key != "tasks")
+        )
 
     def test_outsider_cannot_list_space_modules(self):
         self.client.force_authenticate(self.outsider)
@@ -228,17 +236,15 @@ class ActiveModulePermissionTests(APITestCase):
             kind=Space.Kind.PERSONAL,
         )
         self.view = SimpleNamespace(
-            kwargs={"space_id": self.space.id, "module_key": "tasks"}
+            kwargs={"space_id": self.space.id, "module_key": "shopping"}
         )
 
     def test_unavailable_module_is_rejected_even_when_enabled(self):
         self.assertFalse(HasActiveModule().has_permission(None, self.view))
 
     def test_available_module_must_also_be_enabled(self):
-        available_definition = replace(
-            get_module_definition("tasks"),
-            available=True,
-        )
+        self.view.kwargs["module_key"] = "tasks"
+        available_definition = replace(get_module_definition("tasks"), available=True)
 
         with patch(
             "apps.modules.permissions.get_module_definition",

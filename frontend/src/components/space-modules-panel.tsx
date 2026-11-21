@@ -10,10 +10,11 @@ import { spaceErrorMessage } from '../hooks/use-spaces';
 import { Icon } from './icon';
 
 type SpaceModulesPanelProps = {
+  onOpenModule: (moduleKey: SpaceModuleConfiguration['key']) => void;
   space: Space;
 };
 
-export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
+export function SpaceModulesPanel({ onOpenModule, space }: SpaceModulesPanelProps) {
   const [modules, setModules] = useState<SpaceModuleConfiguration[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -81,7 +82,7 @@ export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
           {navigableModules.length > 0 ? (
             <nav className="module-navigation" aria-label="Módulos activos">
               {navigableModules.map((configuration) => (
-                <a href={configuration.route} key={configuration.key}>
+                <button key={configuration.key} onClick={() => onOpenModule(configuration.key)} type="button">
                   <span className="module-navigation__icon">
                     <Icon name={configuration.icon} />
                   </span>
@@ -90,7 +91,7 @@ export function SpaceModulesPanel({ space }: SpaceModulesPanelProps) {
                     <small>{configuration.description}</small>
                   </span>
                   <span className="module-navigation__action">Abrir</span>
-                </a>
+                </button>
               ))}
             </nav>
           ) : (

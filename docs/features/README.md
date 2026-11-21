@@ -12,6 +12,7 @@ y verificado en OwnTempo. No se usa para propuestas ni diseños futuros.
 - [Espacio personal del usuario](personal-space.md)
 - [Espacios compartidos, invitaciones y miembros](shared-spaces-and-memberships.md)
 - [Plataforma modular por espacio](modular-platform.md)
+- [Tareas personales y compartidas](tasks.md)
 
 Cada documento debe describir el comportamiento real, arquitectura, modelo de
 datos, API, permisos, decisiones técnicas y pruebas asociadas.

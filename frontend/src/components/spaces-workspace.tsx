@@ -1,12 +1,18 @@
 import { useState, type FormEvent } from 'react';
 
+import type { Space } from '../api/spaces';
 import { useSpaces } from '../hooks/use-spaces';
 import { Icon } from './icon';
 import { PersonalSpaceCard } from './personal-space-card';
 import { SharedSpaceCard } from './shared-space-card';
 import { SpaceModulesPanel } from './space-modules-panel';
 
-export function SpacesWorkspace() {
+type SpacesWorkspaceProps = {
+  notice?: string | null;
+  onOpenTasks: (space: Space) => void;
+};
+
+export function SpacesWorkspace({ notice, onOpenTasks }: SpacesWorkspaceProps) {
   const spaces = useSpaces();
   const [newSpaceName, setNewSpaceName] = useState('');
 
@@ -67,6 +73,7 @@ export function SpacesWorkspace() {
       </div>
 
       {spaces.error ? <p className="form-error" role="alert">{spaces.error}</p> : null}
+      {notice ? <p className="form-success" role="status">{notice}</p> : null}
 
       {spaces.invitations.length > 0 ? (
         <section className="invitation-inbox" aria-labelledby="invitation-title">
@@ -109,7 +116,13 @@ export function SpacesWorkspace() {
 
       <div className="active-space-panel">
         {spaces.activeSpace ? (
-          <SpaceModulesPanel key={`modules-${spaces.activeSpace.id}`} space={spaces.activeSpace} />
+          <SpaceModulesPanel
+            key={`modules-${spaces.activeSpace.id}`}
+            onOpenModule={(moduleKey) => {
+              if (moduleKey === 'tasks') onOpenTasks(spaces.activeSpace!);
+            }}
+            space={spaces.activeSpace}
+          />
         ) : null}
 
         <details className="space-management" id="space-management">

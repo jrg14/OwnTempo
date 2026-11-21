@@ -1,14 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { fetchSpaces, type Space } from './api/spaces';
 import { AccountCard } from './components/account-card';
 import { HealthCard } from './components/health-card';
 import { Icon } from './components/icon';
 import { LoginScreen } from './components/login-screen';
 import { SpacesWorkspace } from './components/spaces-workspace';
+import { TasksWorkspace } from './components/tasks-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'account' | 'diagnostics';
+type AppView = 'home' | 'account' | 'diagnostics' | 'tasks';
+
+function taskSpaceIdFromLocation() {
+  const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
+  return match ? Number(match[1]) : null;
+}
 
 function LoadingScreen() {
   return (
@@ -24,8 +31,14 @@ function LoadingScreen() {
 export function App() {
   const auth = useAuth();
   const health = useHealthCheck();
-  const [activeView, setActiveView] = useState<AppView>('home');
+  const initialTaskSpaceId = taskSpaceIdFromLocation();
+  const [activeView, setActiveView] = useState<AppView>(
+    initialTaskSpaceId ? 'tasks' : 'home',
+  );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [taskSpace, setTaskSpace] = useState<Space | null>(null);
+  const [taskSpaceId, setTaskSpaceId] = useState<number | null>(initialTaskSpaceId);
+  const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -69,6 +82,54 @@ export function App() {
     };
   }, [profileMenuOpen]);
 
+  useEffect(() => {
+    const handleNavigation = () => {
+      const routeSpaceId = taskSpaceIdFromLocation();
+      setTaskSpaceId(routeSpaceId);
+      setTaskSpace(null);
+      setActiveView(routeSpaceId ? 'tasks' : 'home');
+    };
+    window.addEventListener('popstate', handleNavigation);
+    return () => window.removeEventListener('popstate', handleNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (!auth.user || !taskSpaceId || taskSpace?.id === taskSpaceId) return;
+    let active = true;
+    fetchSpaces()
+      .then((spaces) => {
+        if (!active) return;
+        const space = spaces.find((candidate) => candidate.id === taskSpaceId);
+        if (space) {
+          setTaskSpace(space);
+        } else {
+          setHomeNotice('Ese espacio ya no está disponible.');
+          window.history.replaceState({}, '', '/');
+          setTaskSpaceId(null);
+          setActiveView('home');
+        }
+      })
+      .catch(() => {
+        if (active) setHomeNotice('No pudimos abrir el espacio solicitado.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [auth.user, taskSpace, taskSpaceId]);
+
+  const goHome = useCallback(() => {
+    if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
+    setActiveView('home');
+    setTaskSpaceId(null);
+    setTaskSpace(null);
+    window.scrollTo({ top: 0 });
+  }, []);
+
+  const handleTasksUnavailable = useCallback(() => {
+    setHomeNotice('El módulo de tareas se ha desactivado en este espacio.');
+    goHome();
+  }, [goHome]);
+
   if (auth.status === 'checking') {
     return <LoadingScreen />;
   }
@@ -85,8 +146,12 @@ export function App() {
     window.scrollTo({ top: 0 });
   };
 
-  const goHome = () => {
-    setActiveView('home');
+  const openTasks = (space: Space) => {
+    window.history.pushState({}, '', `/spaces/${space.id}/tasks/`);
+    setHomeNotice(null);
+    setTaskSpace(space);
+    setTaskSpaceId(space.id);
+    setActiveView('tasks');
     window.scrollTo({ top: 0 });
   };
 
@@ -117,7 +182,10 @@ export function App() {
         {activeView === 'home' ? (
           <>
             <section id="home" aria-label="Inicio">
-              <SpacesWorkspace />
+              <SpacesWorkspace
+                notice={homeNotice}
+                onOpenTasks={openTasks}
+              />
             </section>
             <footer className="page-footer">OwnTempo · A tu ritmo</footer>
           </>
@@ -164,6 +232,16 @@ export function App() {
               status={health.status}
             />
           </section>
+        ) : null}
+
+        {activeView === 'tasks' && taskSpace ? (
+          <TasksWorkspace
+            onBack={goHome}
+            onModuleUnavailable={handleTasksUnavailable}
+            space={taskSpace}
+          />
+        ) : activeView === 'tasks' ? (
+          <div className="app-subpage" role="status">Preparando el espacio…</div>
         ) : null}
       </div>
 

@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.health",
     "apps.spaces",
     "apps.modules",
+    "apps.tasks",
 ]
 
 MIDDLEWARE = [
