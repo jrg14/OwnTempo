@@ -15,7 +15,7 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 7. [Listas de la compra](shopping-lists.md)
 8. [Lista de deseos](wishlist.md)
 9. [Calendario personal y compartido](calendar.md)
+10. [Gastos comunes y ajuste de pareja](expenses.md)
 
-Los planes específicos de gastos se redactarán
-antes de comenzar cada módulo, una vez estabilizada la base común.
+El plan de gastos comunes queda definido, pendiente de implementación.
 

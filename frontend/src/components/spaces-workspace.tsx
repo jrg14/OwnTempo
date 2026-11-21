@@ -10,12 +10,13 @@ import { SpaceModulesPanel } from './space-modules-panel';
 type SpacesWorkspaceProps = {
   notice?: string | null;
   onOpenCalendar: (space: Space) => void;
+  onOpenExpenses: (space: Space) => void;
   onOpenShopping: (space: Space) => void;
   onOpenTasks: (space: Space) => void;
   onOpenWishlist: (space: Space) => void;
 };
 
-export function SpacesWorkspace({ notice, onOpenCalendar, onOpenShopping, onOpenTasks, onOpenWishlist }: SpacesWorkspaceProps) {
+export function SpacesWorkspace({ notice, onOpenCalendar, onOpenExpenses, onOpenShopping, onOpenTasks, onOpenWishlist }: SpacesWorkspaceProps) {
   const spaces = useSpaces();
   const [newSpaceName, setNewSpaceName] = useState('');
 
@@ -126,6 +127,7 @@ export function SpacesWorkspace({ notice, onOpenCalendar, onOpenShopping, onOpen
               if (moduleKey === 'shopping') onOpenShopping(spaces.activeSpace!);
               if (moduleKey === 'wishlist') onOpenWishlist(spaces.activeSpace!);
               if (moduleKey === 'calendar') onOpenCalendar(spaces.activeSpace!);
+              if (moduleKey === 'expenses') onOpenExpenses(spaces.activeSpace!);
             }}
             space={spaces.activeSpace}
           />

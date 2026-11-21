@@ -46,7 +46,7 @@ endpoints ni tareas de programación.
 | Funcionalidad | Estado |
 | --- | --- |
 | Módulo de calendario personal y compartido | `completada` |
-| Módulo de gastos personales y compartidos | `planificada` |
+| Módulo de gastos personales y compartidos | `completada` |
 
 ## Fase 5 — Evolución del producto
 

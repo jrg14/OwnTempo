@@ -55,6 +55,8 @@ MODULE_CATALOG = (
         description="Separa los movimientos personales de los comunes.",
         icon="wallet",
         route_segment="expenses",
+        app_label="expenses",
+        available=True,
     ),
 )
 

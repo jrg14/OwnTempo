@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchSpaces, type Space } from './api/spaces';
 import { AccountCard } from './components/account-card';
 import { CalendarWorkspace } from './components/calendar-workspace';
+import { ExpensesWorkspace } from './components/expenses-workspace';
 import { HealthCard } from './components/health-card';
 import { Icon } from './components/icon';
 import { LoginScreen } from './components/login-screen';
@@ -13,7 +14,7 @@ import { WishlistWorkspace } from './components/wishlist-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar';
+type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
@@ -35,6 +36,11 @@ function calendarSpaceIdFromLocation() {
   return match ? Number(match[1]) : null;
 }
 
+function expensesSpaceIdFromLocation() {
+  const match = window.location.pathname.match(/^\/spaces\/(\d+)\/expenses\/?$/);
+  return match ? Number(match[1]) : null;
+}
+
 function LoadingScreen() {
   return (
     <main className="auth-page">
@@ -53,6 +59,7 @@ export function App() {
   const initialShoppingSpaceId = shoppingSpaceIdFromLocation();
   const initialWishlistSpaceId = wishlistSpaceIdFromLocation();
   const initialCalendarSpaceId = calendarSpaceIdFromLocation();
+  const initialExpensesSpaceId = expensesSpaceIdFromLocation();
   const [activeView, setActiveView] = useState<AppView>(
     initialTaskSpaceId
       ? 'tasks'
@@ -62,6 +69,8 @@ export function App() {
           ? 'wishlist'
           : initialCalendarSpaceId
             ? 'calendar'
+            : initialExpensesSpaceId
+              ? 'expenses'
             : 'home',
   );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -73,6 +82,8 @@ export function App() {
   const [wishlistSpaceId, setWishlistSpaceId] = useState<number | null>(initialWishlistSpaceId);
   const [calendarSpace, setCalendarSpace] = useState<Space | null>(null);
   const [calendarSpaceId, setCalendarSpaceId] = useState<number | null>(initialCalendarSpaceId);
+  const [expensesSpace, setExpensesSpace] = useState<Space | null>(null);
+  const [expensesSpaceId, setExpensesSpaceId] = useState<number | null>(initialExpensesSpaceId);
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -123,6 +134,7 @@ export function App() {
       const routeShoppingSpaceId = shoppingSpaceIdFromLocation();
       const routeWishlistSpaceId = wishlistSpaceIdFromLocation();
       const routeCalendarSpaceId = calendarSpaceIdFromLocation();
+      const routeExpensesSpaceId = expensesSpaceIdFromLocation();
       setTaskSpaceId(routeSpaceId);
       setTaskSpace(null);
       setShoppingSpaceId(routeShoppingSpaceId);
@@ -131,8 +143,10 @@ export function App() {
       setWishlistSpace(null);
       setCalendarSpaceId(routeCalendarSpaceId);
       setCalendarSpace(null);
+      setExpensesSpaceId(routeExpensesSpaceId);
+      setExpensesSpace(null);
       setActiveView(
-        routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : routeWishlistSpaceId ? 'wishlist' : routeCalendarSpaceId ? 'calendar' : 'home',
+        routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : routeWishlistSpaceId ? 'wishlist' : routeCalendarSpaceId ? 'calendar' : routeExpensesSpaceId ? 'expenses' : 'home',
       );
     };
     window.addEventListener('popstate', handleNavigation);
@@ -223,6 +237,25 @@ export function App() {
     return () => { active = false; };
   }, [auth.user, calendarSpace, calendarSpaceId]);
 
+  useEffect(() => {
+    if (!auth.user || !expensesSpaceId || expensesSpace?.id === expensesSpaceId) return;
+    let active = true;
+    fetchSpaces()
+      .then((spaces) => {
+        if (!active) return;
+        const space = spaces.find((candidate) => candidate.id === expensesSpaceId);
+        if (space) setExpensesSpace(space);
+        else {
+          setHomeNotice('Ese espacio ya no está disponible.');
+          window.history.replaceState({}, '', '/');
+          setExpensesSpaceId(null);
+          setActiveView('home');
+        }
+      })
+      .catch(() => { if (active) setHomeNotice('No pudimos abrir el espacio solicitado.'); });
+    return () => { active = false; };
+  }, [auth.user, expensesSpace, expensesSpaceId]);
+
   const goHome = useCallback(() => {
     if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
     setActiveView('home');
@@ -234,6 +267,8 @@ export function App() {
     setWishlistSpace(null);
     setCalendarSpaceId(null);
     setCalendarSpace(null);
+    setExpensesSpaceId(null);
+    setExpensesSpace(null);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -254,6 +289,11 @@ export function App() {
 
   const handleCalendarUnavailable = useCallback(() => {
     setHomeNotice('El módulo de calendario se ha desactivado en este espacio.');
+    goHome();
+  }, [goHome]);
+
+  const handleExpensesUnavailable = useCallback(() => {
+    setHomeNotice('El módulo de gastos se ha desactivado en este espacio.');
     goHome();
   }, [goHome]);
 
@@ -309,6 +349,15 @@ export function App() {
     window.scrollTo({ top: 0 });
   };
 
+  const openExpenses = (space: Space) => {
+    window.history.pushState({}, '', `/spaces/${space.id}/expenses/`);
+    setHomeNotice(null);
+    setExpensesSpace(space);
+    setExpensesSpaceId(space.id);
+    setActiveView('expenses');
+    window.scrollTo({ top: 0 });
+  };
+
   return (
     <main className="app-page">
       <div className="app-shell">
@@ -339,6 +388,7 @@ export function App() {
               <SpacesWorkspace
                 notice={homeNotice}
                 onOpenCalendar={openCalendar}
+                onOpenExpenses={openExpenses}
                 onOpenShopping={openShopping}
                 onOpenTasks={openTasks}
                 onOpenWishlist={openWishlist}
@@ -428,6 +478,17 @@ export function App() {
             space={calendarSpace}
           />
         ) : activeView === 'calendar' ? (
+          <div className="app-subpage" role="status">Preparando el espacio…</div>
+        ) : null}
+
+        {activeView === 'expenses' && expensesSpace ? (
+          <ExpensesWorkspace
+            currentUserId={auth.user.id}
+            onBack={goHome}
+            onModuleUnavailable={handleExpensesUnavailable}
+            space={expensesSpace}
+          />
+        ) : activeView === 'expenses' ? (
           <div className="app-subpage" role="status">Preparando el espacio…</div>
         ) : null}
       </div>

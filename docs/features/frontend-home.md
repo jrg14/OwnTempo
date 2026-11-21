@@ -13,7 +13,8 @@ contrario, la PWA presenta la pantalla de acceso.
 
 ## Comportamiento
 
-- Presenta tareas, compras, deseos, calendario y gastos como próximos módulos.
+- Presenta y permite abrir tareas, compras, deseos, calendario y gastos desde el
+  espacio activo cuando están habilitados.
 - Explica la separación entre espacios personales y compartidos.
 - Consulta `GET /api/v1/health/` al abrir la pantalla.
 - Muestra estados de carga, conexión correcta y error.
