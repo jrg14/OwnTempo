@@ -191,6 +191,8 @@ export function ExpensesWorkspace({ currentUserId, onBack, onModuleUnavailable, 
   const [personalExpenses, setPersonalExpenses] = useState<ExpenseEntry[]>([]);
   const [editingCommon, setEditingCommon] = useState<ExpenseEntry | null>(null);
   const [editingPersonal, setEditingPersonal] = useState<ExpenseEntry | null>(null);
+  const [commonFormOpen, setCommonFormOpen] = useState(false);
+  const [personalFormOpen, setPersonalFormOpen] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -240,20 +242,122 @@ export function ExpensesWorkspace({ currentUserId, onBack, onModuleUnavailable, 
   }, [space.id, month]);
 
   const run = async (action: () => Promise<void>, message: string) => { setBusy(true); setError(null); try { await action(); await load(); setAnnouncement(message); } catch (failure) { setError(spaceErrorMessage(failure)); } finally { setBusy(false); } };
-  const saveCommon = async (input: ExpenseEntryInput) => run(async () => { if (!period) return; if (editingCommon) await updateCommonExpense(space.id, period.id, editingCommon.id, input); else await createCommonExpense(space.id, period.id, input); setEditingCommon(null); }, editingCommon ? 'Gasto común actualizado.' : 'Gasto común añadido.');
-  const savePersonal = async (input: ExpenseEntryInput) => run(async () => { if (!period) return; if (editingPersonal) await updatePersonalExpense(space.id, period.id, editingPersonal.id, input); else await createPersonalExpense(space.id, period.id, input); setEditingPersonal(null); }, editingPersonal ? 'Gasto personal actualizado.' : 'Gasto personal añadido.');
+  const saveCommon = async (input: ExpenseEntryInput) => run(async () => { if (!period) return; if (editingCommon) await updateCommonExpense(space.id, period.id, editingCommon.id, input); else await createCommonExpense(space.id, period.id, input); setEditingCommon(null); setCommonFormOpen(false); }, editingCommon ? 'Gasto común actualizado.' : 'Gasto común añadido.');
+  const savePersonal = async (input: ExpenseEntryInput) => run(async () => { if (!period) return; if (editingPersonal) await updatePersonalExpense(space.id, period.id, editingPersonal.id, input); else await createPersonalExpense(space.id, period.id, input); setEditingPersonal(null); setPersonalFormOpen(false); }, editingPersonal ? 'Gasto personal actualizado.' : 'Gasto personal añadido.');
 
-  return <section className="expenses-workspace" aria-labelledby="expenses-title">
-    <button className="back-button" onClick={onBack} type="button"><Icon name="arrow-left" />Volver al inicio</button>
-    <header className="expenses-header"><div><h1 id="expenses-title">Gastos</h1><p>{space.name} · {space.kind === 'personal' ? 'control de gastos personales' : 'de los ingresos al ahorro final'}</p></div><label><span>Periodo</span><input onChange={(event) => setMonth(event.target.value)} type="month" value={month} /></label></header>
-    {error ? <p className="form-error" role="alert">{error}</p> : null}<span className="sr-only" aria-live="polite">{announcement}</span>
-    {loading ? <div className="expense-loading" role="status"><span className="spinner" />Calculando el periodo…</div> : !period ? space.kind === 'personal' ? <PersonalPeriodSetup busy={busy} currentUserId={currentUserId} month={month} onCreate={(participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: 'equal', participant_inputs: participantInputs }); }, 'Periodo personal creado.')} /> : <PeriodSetup busy={busy} currentUserId={currentUserId} members={members} month={month} onCreate={(mode, participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: mode, participant_inputs: participantInputs }); }, 'Periodo creado.')} /> : <>
-      <div className="expense-period-status"><span className={`expense-status expense-status--${period.status}`}>{period.status === 'open' ? 'Periodo abierto' : 'Periodo cerrado'}</span>{period.status === 'open' || space.role === 'owner' ? <button className="secondary-button" disabled={busy} onClick={() => void run(async () => { await updateExpensePeriod(space.id, period.id, { status: period.status === 'open' ? 'closed' : 'open' }); }, period.status === 'open' ? 'Periodo cerrado.' : 'Periodo reabierto.')} type="button">{period.status === 'open' ? 'Cerrar periodo' : 'Reabrir periodo'}</button> : null}</div>
-      {summary ? space.kind === 'shared' ? <div className="expense-summary"><article className="expense-total-card"><span>Total común</span><strong>{money(summary.total_common)}</strong><div>{summary.categories.map((item) => <span key={item.category_id}>{item.name}: {money(item.total)}</span>)}</div></article>{summary.participants.map((item) => <article className="expense-person-card" key={item.participant_id}><header><strong>{displayName(item.user)}</strong><span>Ingreso {money(item.income)}</span></header><dl><div><dt>Aporte común</dt><dd>{money(item.expected_contribution)}</dd></div><div><dt>Pagado</dt><dd>{money(item.paid)}</dd></div><div><dt>Restante tras comunes</dt><dd>{money(item.available_savings)}</dd></div><div><dt>Saldo personal inicial</dt><dd>{money(item.personal_starting_savings)}</dd></div><div><dt>Gasto personal</dt><dd>{money(item.personal_spent)}</dd></div><div className="is-total"><dt>Saldo personal final</dt><dd>{money(item.final_savings)}</dd></div></dl></article>)}</div> : currentSummary ? <div className="expense-personal-summary"><article><span>Saldo inicial</span><strong>{money(currentSummary.personal_starting_savings)}</strong></article><article><span>Gastado</span><strong>{money(currentSummary.personal_spent)}</strong></article><article className="is-primary"><span>Disponible</span><strong>{money(currentSummary.final_savings)}</strong></article></div> : null : null}
-      {space.kind === 'shared' ? <><section className="expense-settlement"><h2>Ajuste común</h2>{summary?.transfers[0] ? <p><strong>{displayName(summary.transfers[0].from)}</strong> debe transferir <strong>{money(summary.transfers[0].amount)}</strong> a <strong>{displayName(summary.transfers[0].to)}</strong>.</p> : <p>No hay nada que ajustar.</p>}</section><PeriodConfiguration busy={busy} key={period.updated_at} onSave={(mode, participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { split_mode: mode, participant_inputs: participantInputs }); }, 'Reparto actualizado.')} period={period} /></> : null}
-      <div className={`expense-columns${space.kind === 'personal' ? ' expense-columns--personal' : ''}`}>{space.kind === 'shared' ? <section className="expense-panel"><header><div><h2>Gastos comunes</h2><p>Se reparten según la configuración del periodo.</p></div></header>{period.status === 'open' ? <EntryForm busy={busy} categories={categories} editing={editingCommon} key={`common-${editingCommon?.id ?? 'new'}-${commonExpenses.length}-${categories.filter((item) => item.is_active).map((item) => item.id).join('-')}`} kind="common" onCancel={() => setEditingCommon(null)} onSave={saveCommon} participants={period.participants} period={period} /> : null}<ul className="expense-list">{commonExpenses.map((item) => <li key={item.id}><span className={`expense-dot expense-dot--${item.category.color}`} /><div><strong>{item.description}</strong><span>{item.category.name} · {item.paid_by ? displayName(item.paid_by.user) : ''} · {new Date(`${item.spent_on}T12:00:00`).toLocaleDateString('es-ES')}</span></div><b>{money(item.amount)}</b>{period.status === 'open' ? <div className="expense-row-actions"><button aria-label={`Editar ${item.description}`} onClick={() => setEditingCommon(item)} type="button"><Icon name="edit" /></button><button aria-label={`Eliminar ${item.description}`} className="is-danger" onClick={() => { if (window.confirm(`¿Eliminar “${item.description}”?`)) void run(() => deleteCommonExpense(space.id, period.id, item.id), 'Gasto eliminado.'); }} type="button"><Icon name="trash" /></button></div> : null}</li>)}</ul>{commonExpenses.length === 0 ? <p className="expense-list-empty">Todavía no hay gastos comunes.</p> : null}</section> : null}
-      <section className="expense-panel"><header><div><h2>Mis gastos personales</h2><p>Parten del saldo inicial que tú decidas.</p></div>{currentSummary ? <strong className="expense-available">Disponible: {money(currentSummary.final_savings)}</strong> : null}</header>{currentParticipant ? <PersonalBalanceForm busy={busy} key={`${currentParticipant.id}-${currentParticipant.personal_starting_savings}`} onSave={(participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { participant_inputs: participantInputs }); }, 'Saldo personal actualizado.')} participant={currentParticipant} period={period} /> : null}{period.status === 'open' && currentSummary ? <EntryForm busy={busy} categories={categories} editing={editingPersonal} key={`personal-${editingPersonal?.id ?? 'new'}-${personalExpenses.length}-${categories.filter((item) => item.is_active).map((item) => item.id).join('-')}`} kind="personal" onCancel={() => setEditingPersonal(null)} onSave={savePersonal} participants={period.participants} period={period} /> : null}<ul className="expense-list">{personalExpenses.map((item) => <li key={item.id}><span className={`expense-dot expense-dot--${item.category.color}`} /><div><strong>{item.description}</strong><span>{item.category.name} · {new Date(`${item.spent_on}T12:00:00`).toLocaleDateString('es-ES')}</span></div><b>{money(item.amount)}</b>{period.status === 'open' ? <div className="expense-row-actions"><button aria-label={`Editar ${item.description}`} onClick={() => setEditingPersonal(item)} type="button"><Icon name="edit" /></button><button aria-label={`Eliminar ${item.description}`} className="is-danger" onClick={() => { if (window.confirm(`¿Eliminar “${item.description}”?`)) void run(() => deletePersonalExpense(space.id, period.id, item.id), 'Gasto personal eliminado.'); }} type="button"><Icon name="trash" /></button></div> : null}</li>)}</ul>{personalExpenses.length === 0 ? <p className="expense-list-empty">Todavía no has añadido gastos personales.</p> : null}</section></div>
-      <section className="expense-category-manager"><header><h2>Categorías</h2><p>Organiza los conceptos disponibles para tus gastos.</p></header><div className="expense-category-chips">{categories.map((category) => <span className={category.is_active ? '' : 'is-inactive'} key={category.id}>{category.name}<button aria-label={`Renombrar ${category.name}`} disabled={busy} onClick={() => { const name = window.prompt('Nuevo nombre', category.name)?.trim(); if (name && name !== category.name) void run(() => updateExpenseCategory(space.id, category.id, { name }).then(() => undefined), 'Categoría actualizada.'); }} type="button"><Icon name="edit" /></button><button disabled={busy} onClick={() => void run(() => updateExpenseCategory(space.id, category.id, { is_active: !category.is_active }).then(() => undefined), category.is_active ? 'Categoría desactivada.' : 'Categoría activada.')} type="button">{category.is_active ? 'Desactivar' : 'Activar'}</button></span>)}</div><form className="expense-category-form" onSubmit={(event) => { event.preventDefault(); if (newCategory.trim()) void run(async () => { await createExpenseCategory(space.id, newCategory.trim()); setNewCategory(''); }, 'Categoría creada.'); }}><label><span>Nueva categoría</span><input maxLength={80} onChange={(event) => setNewCategory(event.target.value)} placeholder="Mascotas, salud…" value={newCategory} /></label><button className="secondary-button" disabled={busy || !newCategory.trim()} type="submit">Añadir</button></form></section>
-    </>}
-  </section>;
+  const categoryManager = (
+    <section className="expense-category-manager">
+      <header><h2>Categorías</h2><p>Organiza los conceptos disponibles para tus gastos.</p></header>
+      <div className="expense-category-chips">
+        {categories.map((category) => <span className={category.is_active ? '' : 'is-inactive'} key={category.id}>{category.name}<button aria-label={`Renombrar ${category.name}`} disabled={busy} onClick={() => { const name = window.prompt('Nuevo nombre', category.name)?.trim(); if (name && name !== category.name) void run(() => updateExpenseCategory(space.id, category.id, { name }).then(() => undefined), 'Categoría actualizada.'); }} type="button"><Icon name="edit" /></button><button disabled={busy} onClick={() => void run(() => updateExpenseCategory(space.id, category.id, { is_active: !category.is_active }).then(() => undefined), category.is_active ? 'Categoría desactivada.' : 'Categoría activada.')} type="button">{category.is_active ? 'Desactivar' : 'Activar'}</button></span>)}
+      </div>
+      <form className="expense-category-form" onSubmit={(event) => { event.preventDefault(); if (newCategory.trim()) void run(async () => { await createExpenseCategory(space.id, newCategory.trim()); setNewCategory(''); }, 'Categoría creada.'); }}>
+        <label><span>Nueva categoría</span><input maxLength={80} onChange={(event) => setNewCategory(event.target.value)} placeholder="Mascotas, salud…" value={newCategory} /></label>
+        <button className="secondary-button" disabled={busy || !newCategory.trim()} type="submit">Añadir</button>
+      </form>
+    </section>
+  );
+
+  return (
+    <section className={`expenses-workspace expenses-workspace--${space.kind}`} aria-labelledby="expenses-title">
+      <header className="expenses-header">
+        <button aria-label="Volver al inicio" className="expenses-back-button" onClick={onBack} type="button"><Icon name="arrow-left" /></button>
+        <div className="expenses-header__copy"><h1 id="expenses-title">Gastos</h1><p>{space.name}</p></div>
+        <label className="expenses-period"><span>Periodo</span><input aria-label="Periodo" onChange={(event) => setMonth(event.target.value)} type="month" value={month} /></label>
+      </header>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <span className="sr-only" aria-live="polite">{announcement}</span>
+
+      {loading ? <div className="expense-loading" role="status"><span className="spinner" />Calculando el periodo…</div> : !period ? space.kind === 'personal' ? <PersonalPeriodSetup busy={busy} currentUserId={currentUserId} month={month} onCreate={(participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: 'equal', participant_inputs: participantInputs }); }, 'Periodo personal creado.')} /> : <PeriodSetup busy={busy} currentUserId={currentUserId} members={members} month={month} onCreate={(mode, participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: mode, participant_inputs: participantInputs }); }, 'Periodo creado.')} /> : space.kind === 'shared' ? (
+        <>
+          {summary ? (
+            <section className="expense-common-overview" aria-labelledby="common-total-label">
+              <div className="expense-common-overview__heading">
+                <div><span id="common-total-label">Total común</span><strong>{money(summary.total_common)}</strong></div>
+                <span className={`expense-status expense-status--${period.status}`}>{period.status === 'open' ? 'Abierto' : 'Cerrado'}</span>
+              </div>
+              <dl>
+                <div><dt>Tu aporte</dt><dd>{money(currentSummary?.expected_contribution ?? 0)}</dd></div>
+                <div><dt>Has pagado</dt><dd>{money(currentSummary?.paid ?? 0)}</dd></div>
+              </dl>
+            </section>
+          ) : null}
+
+          {period.status === 'open' ? (
+            <button className="expense-add-button" onClick={() => { setEditingCommon(null); setCommonFormOpen((open) => !open); }} type="button">
+              <Icon name={commonFormOpen ? 'close' : 'plus'} />{commonFormOpen ? 'Cerrar formulario' : 'Añadir gasto'}
+            </button>
+          ) : null}
+
+          {commonFormOpen && period.status === 'open' ? (
+            <section className="expense-compose" aria-label={editingCommon ? 'Editar gasto común' : 'Añadir gasto común'}>
+              <EntryForm busy={busy} categories={categories} editing={editingCommon} key={`common-${editingCommon?.id ?? 'new'}-${commonExpenses.length}-${categories.filter((item) => item.is_active).map((item) => item.id).join('-')}`} kind="common" onCancel={() => { setEditingCommon(null); setCommonFormOpen(false); }} onSave={saveCommon} participants={period.participants} period={period} />
+            </section>
+          ) : null}
+
+          <section className="expense-movements" aria-labelledby="expense-movements-title">
+            <header><div><h2 id="expense-movements-title">Movimientos</h2><p>{commonExpenses.length} {commonExpenses.length === 1 ? 'gasto' : 'gastos'} este mes</p></div></header>
+            <ul className="expense-list expense-list--compact">
+              {commonExpenses.map((item) => <li key={item.id}><span className={`expense-category-icon expense-category-icon--${item.category.color}`}><Icon name="wallet" /></span><div className="expense-row-copy"><strong>{item.description}</strong><span>{item.category.name}{item.paid_by ? ` · ${displayName(item.paid_by.user)}` : ''} · {new Date(`${item.spent_on}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span></div><b>{money(item.amount)}</b>{period.status === 'open' ? <details className="expense-row-menu"><summary aria-label={`Opciones de ${item.description}`}><Icon name="more" /></summary><div><button onClick={() => { setEditingCommon(item); setCommonFormOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} type="button"><Icon name="edit" />Editar</button><button className="is-danger" onClick={() => { if (window.confirm(`¿Eliminar “${item.description}”?`)) void run(() => deleteCommonExpense(space.id, period.id, item.id), 'Gasto eliminado.'); }} type="button"><Icon name="trash" />Eliminar</button></div></details> : null}</li>)}
+            </ul>
+            {commonExpenses.length === 0 ? <div className="expense-list-empty"><Icon name="wallet" /><strong>Aún no hay movimientos</strong><span>Añade el primer gasto común de este periodo.</span></div> : null}
+          </section>
+
+          <details className="expense-management">
+            <summary><span><Icon name="settings" />Gestionar periodo</span><Icon name="chevron" /></summary>
+            <div className="expense-management__content">
+              <section className="expense-settlement"><h2>Ajuste común</h2>{summary?.transfers[0] ? <p><strong>{displayName(summary.transfers[0].from)}</strong> debe transferir <strong>{money(summary.transfers[0].amount)}</strong> a <strong>{displayName(summary.transfers[0].to)}</strong>.</p> : <p>No hay nada que ajustar.</p>}</section>
+              <PeriodConfiguration busy={busy} key={period.updated_at} onSave={(mode, participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { split_mode: mode, participant_inputs: participantInputs }); }, 'Reparto actualizado.')} period={period} />
+              {categoryManager}
+              {period.status === 'open' || space.role === 'owner' ? <button className="secondary-button expense-period-toggle" disabled={busy} onClick={() => void run(async () => { await updateExpensePeriod(space.id, period.id, { status: period.status === 'open' ? 'closed' : 'open' }); }, period.status === 'open' ? 'Periodo cerrado.' : 'Periodo reabierto.')} type="button">{period.status === 'open' ? 'Cerrar periodo' : 'Reabrir periodo'}</button> : null}
+            </div>
+          </details>
+        </>
+      ) : (
+        <>
+          {currentSummary ? (
+            <section className="expense-common-overview expense-personal-overview" aria-labelledby="personal-balance-label">
+              <div className="expense-common-overview__heading">
+                <div><span id="personal-balance-label">Disponible</span><strong>{money(currentSummary.final_savings)}</strong></div>
+                <span className={`expense-status expense-status--${period.status}`}>{period.status === 'open' ? 'Abierto' : 'Cerrado'}</span>
+              </div>
+              <dl>
+                <div><dt>Saldo inicial</dt><dd>{money(currentSummary.personal_starting_savings)}</dd></div>
+                <div><dt>Gastado</dt><dd>{money(currentSummary.personal_spent)}</dd></div>
+              </dl>
+            </section>
+          ) : null}
+
+          {period.status === 'open' && currentSummary ? (
+            <button className="expense-add-button" onClick={() => { setEditingPersonal(null); setPersonalFormOpen((open) => !open); }} type="button">
+              <Icon name={personalFormOpen ? 'close' : 'plus'} />{personalFormOpen ? 'Cerrar formulario' : 'Añadir gasto'}
+            </button>
+          ) : null}
+
+          {personalFormOpen && period.status === 'open' && currentSummary ? (
+            <section className="expense-compose" aria-label={editingPersonal ? 'Editar gasto personal' : 'Añadir gasto personal'}>
+              <EntryForm busy={busy} categories={categories} editing={editingPersonal} key={`personal-${editingPersonal?.id ?? 'new'}-${personalExpenses.length}-${categories.filter((item) => item.is_active).map((item) => item.id).join('-')}`} kind="personal" onCancel={() => { setEditingPersonal(null); setPersonalFormOpen(false); }} onSave={savePersonal} participants={period.participants} period={period} />
+            </section>
+          ) : null}
+
+          <section className="expense-movements" aria-labelledby="personal-movements-title">
+            <header><div><h2 id="personal-movements-title">Movimientos</h2><p>{personalExpenses.length} {personalExpenses.length === 1 ? 'gasto' : 'gastos'} este mes</p></div></header>
+            <ul className="expense-list expense-list--compact">
+              {personalExpenses.map((item) => <li key={item.id}><span className={`expense-category-icon expense-category-icon--${item.category.color}`}><Icon name="wallet" /></span><div className="expense-row-copy"><strong>{item.description}</strong><span>{item.category.name} · {new Date(`${item.spent_on}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span></div><b>{money(item.amount)}</b>{period.status === 'open' ? <details className="expense-row-menu"><summary aria-label={`Opciones de ${item.description}`}><Icon name="more" /></summary><div><button onClick={() => { setEditingPersonal(item); setPersonalFormOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} type="button"><Icon name="edit" />Editar</button><button className="is-danger" onClick={() => { if (window.confirm(`¿Eliminar “${item.description}”?`)) void run(() => deletePersonalExpense(space.id, period.id, item.id), 'Gasto personal eliminado.'); }} type="button"><Icon name="trash" />Eliminar</button></div></details> : null}</li>)}
+            </ul>
+            {personalExpenses.length === 0 ? <div className="expense-list-empty"><Icon name="wallet" /><strong>Aún no hay movimientos</strong><span>Añade el primer gasto personal de este periodo.</span></div> : null}
+          </section>
+
+          <details className="expense-management">
+            <summary><span><Icon name="settings" />Gestionar gastos personales</span><Icon name="chevron" /></summary>
+            <div className="expense-management__content">
+              {currentParticipant ? <PersonalBalanceForm busy={busy} key={`${currentParticipant.id}-${currentParticipant.personal_starting_savings}`} onSave={(participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { participant_inputs: participantInputs }); }, 'Saldo personal actualizado.')} participant={currentParticipant} period={period} /> : null}
+              {categoryManager}
+              {period.status === 'open' || space.role === 'owner' ? <button className="secondary-button expense-period-toggle" disabled={busy} onClick={() => void run(async () => { await updateExpensePeriod(space.id, period.id, { status: period.status === 'open' ? 'closed' : 'open' }); }, period.status === 'open' ? 'Periodo cerrado.' : 'Periodo reabierto.')} type="button">{period.status === 'open' ? 'Cerrar periodo' : 'Reabrir periodo'}</button> : null}
+            </div>
+          </details>
+        </>
+      )}
+    </section>
+  );
 }

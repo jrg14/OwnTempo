@@ -15,7 +15,7 @@ import { WishlistWorkspace } from './components/wishlist-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'spaces' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
+type AppView = 'home' | 'modules' | 'spaces' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
@@ -417,19 +417,7 @@ export function App() {
         </header>
 
         {activeView === 'home' ? (
-          <>
-            <section id="home" aria-label="Inicio">
-              <SpacesWorkspace
-                notice={homeNotice}
-                onOpenCalendar={openCalendar}
-                onOpenExpenses={openExpenses}
-                onOpenShopping={openShopping}
-                onOpenTasks={openTasks}
-                onOpenWishlist={openWishlist}
-              />
-            </section>
-            <footer className="page-footer">OwnTempo · A tu ritmo</footer>
-          </>
+          <section className="empty-home" id="home" aria-label="Inicio" />
         ) : null}
 
         {activeView === 'account' ? (
@@ -465,6 +453,27 @@ export function App() {
             <SpacesWorkspace
               mode="manage"
               notice={homeNotice}
+              onOpenCalendar={openCalendar}
+              onOpenExpenses={openExpenses}
+              onOpenShopping={openShopping}
+              onOpenTasks={openTasks}
+              onOpenWishlist={openWishlist}
+            />
+          </section>
+        ) : null}
+
+        {activeView === 'modules' ? (
+          <section className="app-subpage" aria-labelledby="modules-page-title">
+            <button className="back-button" onClick={goHome} type="button">
+              <Icon name="arrow-left" />
+              Volver al inicio
+            </button>
+            <header className="subpage-heading">
+              <h1 id="modules-page-title">Configurar módulos</h1>
+              <p>Elige qué módulos quieres utilizar en cada espacio.</p>
+            </header>
+            <SpacesWorkspace
+              mode="home"
               onOpenCalendar={openCalendar}
               onOpenExpenses={openExpenses}
               onOpenShopping={openShopping}
@@ -599,6 +608,11 @@ export function App() {
                   </div>
                 ))}
               </div>
+              <button onClick={() => openView('modules')} type="button">
+                <span className="profile-menu__item-icon"><Icon name="settings" /></span>
+                <span><strong>Configurar módulos</strong><small>Activar módulos por espacio</small></span>
+                <Icon name="arrow-right" />
+              </button>
               <button onClick={() => openView('spaces')} type="button">
                 <span className="profile-menu__item-icon"><Icon name="users" /></span>
                 <span><strong>Gestionar espacios</strong><small>Crear, editar y administrar miembros</small></span>
