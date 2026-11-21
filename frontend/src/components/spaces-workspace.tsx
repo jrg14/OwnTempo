@@ -9,10 +9,11 @@ import { SpaceModulesPanel } from './space-modules-panel';
 
 type SpacesWorkspaceProps = {
   notice?: string | null;
+  onOpenShopping: (space: Space) => void;
   onOpenTasks: (space: Space) => void;
 };
 
-export function SpacesWorkspace({ notice, onOpenTasks }: SpacesWorkspaceProps) {
+export function SpacesWorkspace({ notice, onOpenShopping, onOpenTasks }: SpacesWorkspaceProps) {
   const spaces = useSpaces();
   const [newSpaceName, setNewSpaceName] = useState('');
 
@@ -120,6 +121,7 @@ export function SpacesWorkspace({ notice, onOpenTasks }: SpacesWorkspaceProps) {
             key={`modules-${spaces.activeSpace.id}`}
             onOpenModule={(moduleKey) => {
               if (moduleKey === 'tasks') onOpenTasks(spaces.activeSpace!);
+              if (moduleKey === 'shopping') onOpenShopping(spaces.activeSpace!);
             }}
             space={spaces.activeSpace}
           />

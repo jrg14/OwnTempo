@@ -28,6 +28,8 @@ MODULE_CATALOG = (
         description="Prepara compras y marca lo que ya está listo.",
         icon="cart",
         route_segment="shopping",
+        app_label="shopping",
+        available=True,
     ),
     ModuleDefinition(
         key="wishlist",

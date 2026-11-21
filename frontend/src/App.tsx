@@ -6,14 +6,20 @@ import { HealthCard } from './components/health-card';
 import { Icon } from './components/icon';
 import { LoginScreen } from './components/login-screen';
 import { SpacesWorkspace } from './components/spaces-workspace';
+import { ShoppingWorkspace } from './components/shopping-workspace';
 import { TasksWorkspace } from './components/tasks-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'account' | 'diagnostics' | 'tasks';
+type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
+  return match ? Number(match[1]) : null;
+}
+
+function shoppingSpaceIdFromLocation() {
+  const match = window.location.pathname.match(/^\/spaces\/(\d+)\/shopping\/?$/);
   return match ? Number(match[1]) : null;
 }
 
@@ -32,12 +38,15 @@ export function App() {
   const auth = useAuth();
   const health = useHealthCheck();
   const initialTaskSpaceId = taskSpaceIdFromLocation();
+  const initialShoppingSpaceId = shoppingSpaceIdFromLocation();
   const [activeView, setActiveView] = useState<AppView>(
-    initialTaskSpaceId ? 'tasks' : 'home',
+    initialTaskSpaceId ? 'tasks' : initialShoppingSpaceId ? 'shopping' : 'home',
   );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [taskSpace, setTaskSpace] = useState<Space | null>(null);
   const [taskSpaceId, setTaskSpaceId] = useState<number | null>(initialTaskSpaceId);
+  const [shoppingSpace, setShoppingSpace] = useState<Space | null>(null);
+  const [shoppingSpaceId, setShoppingSpaceId] = useState<number | null>(initialShoppingSpaceId);
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -85,9 +94,12 @@ export function App() {
   useEffect(() => {
     const handleNavigation = () => {
       const routeSpaceId = taskSpaceIdFromLocation();
+      const routeShoppingSpaceId = shoppingSpaceIdFromLocation();
       setTaskSpaceId(routeSpaceId);
       setTaskSpace(null);
-      setActiveView(routeSpaceId ? 'tasks' : 'home');
+      setShoppingSpaceId(routeShoppingSpaceId);
+      setShoppingSpace(null);
+      setActiveView(routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : 'home');
     };
     window.addEventListener('popstate', handleNavigation);
     return () => window.removeEventListener('popstate', handleNavigation);
@@ -117,16 +129,45 @@ export function App() {
     };
   }, [auth.user, taskSpace, taskSpaceId]);
 
+  useEffect(() => {
+    if (!auth.user || !shoppingSpaceId || shoppingSpace?.id === shoppingSpaceId) return;
+    let active = true;
+    fetchSpaces()
+      .then((spaces) => {
+        if (!active) return;
+        const space = spaces.find((candidate) => candidate.id === shoppingSpaceId);
+        if (space) {
+          setShoppingSpace(space);
+        } else {
+          setHomeNotice('Ese espacio ya no está disponible.');
+          window.history.replaceState({}, '', '/');
+          setShoppingSpaceId(null);
+          setActiveView('home');
+        }
+      })
+      .catch(() => {
+        if (active) setHomeNotice('No pudimos abrir el espacio solicitado.');
+      });
+    return () => { active = false; };
+  }, [auth.user, shoppingSpace, shoppingSpaceId]);
+
   const goHome = useCallback(() => {
     if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
     setActiveView('home');
     setTaskSpaceId(null);
     setTaskSpace(null);
+    setShoppingSpaceId(null);
+    setShoppingSpace(null);
     window.scrollTo({ top: 0 });
   }, []);
 
   const handleTasksUnavailable = useCallback(() => {
     setHomeNotice('El módulo de tareas se ha desactivado en este espacio.');
+    goHome();
+  }, [goHome]);
+
+  const handleShoppingUnavailable = useCallback(() => {
+    setHomeNotice('El módulo de listas de la compra se ha desactivado en este espacio.');
     goHome();
   }, [goHome]);
 
@@ -152,6 +193,15 @@ export function App() {
     setTaskSpace(space);
     setTaskSpaceId(space.id);
     setActiveView('tasks');
+    window.scrollTo({ top: 0 });
+  };
+
+  const openShopping = (space: Space) => {
+    window.history.pushState({}, '', `/spaces/${space.id}/shopping/`);
+    setHomeNotice(null);
+    setShoppingSpace(space);
+    setShoppingSpaceId(space.id);
+    setActiveView('shopping');
     window.scrollTo({ top: 0 });
   };
 
@@ -184,6 +234,7 @@ export function App() {
             <section id="home" aria-label="Inicio">
               <SpacesWorkspace
                 notice={homeNotice}
+                onOpenShopping={openShopping}
                 onOpenTasks={openTasks}
               />
             </section>
@@ -241,6 +292,16 @@ export function App() {
             space={taskSpace}
           />
         ) : activeView === 'tasks' ? (
+          <div className="app-subpage" role="status">Preparando el espacio…</div>
+        ) : null}
+
+        {activeView === 'shopping' && shoppingSpace ? (
+          <ShoppingWorkspace
+            onBack={goHome}
+            onModuleUnavailable={handleShoppingUnavailable}
+            space={shoppingSpace}
+          />
+        ) : activeView === 'shopping' ? (
           <div className="app-subpage" role="status">Preparando el espacio…</div>
         ) : null}
       </div>

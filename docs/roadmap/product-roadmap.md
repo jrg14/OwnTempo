@@ -38,7 +38,7 @@ endpoints ni tareas de programación.
 | Funcionalidad | Estado |
 | --- | --- |
 | Módulo de tareas personales y compartidas | `completada` |
-| Módulo de listas de la compra | `planificada` |
+| Módulo de listas de la compra | `completada` |
 | Módulo de lista de deseos | `planificada` |
 
 ## Fase 4 — Planificación y economía

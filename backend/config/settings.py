@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.spaces",
     "apps.modules",
     "apps.tasks",
+    "apps.shopping",
 ]
 
 MIDDLEWARE = [

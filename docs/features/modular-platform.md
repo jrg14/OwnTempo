@@ -2,8 +2,8 @@
 
 ## Estado
 
-Implementada y verificada. `tasks` es el primer módulo de negocio disponible;
-la plataforma presenta los demás como próximos hasta implementar cada feature.
+Implementada y verificada. `tasks` y `shopping` están disponibles; la plataforma
+presenta los demás como próximos hasta implementar cada feature.
 
 ## Catálogo
 
@@ -15,8 +15,9 @@ El catálogo estable contiene cinco identificadores:
 - `calendar`: Calendario.
 - `expenses`: Gastos.
 
-Cada definición contiene nombre, descripción, icono semántico, segmento de ruta
-y estado de disponibilidad. Los identificadores no dependen del texto visible.
+Cada definición contiene nombre, descripción, icono semántico, segmento de ruta,
+app Django cuando corresponde y estado de disponibilidad. Los identificadores
+no dependen del texto visible.
 
 ## Configuración por espacio
 
@@ -28,7 +29,7 @@ La app `apps.modules` define `SpaceModule`, con:
 - Fechas de creación y actualización.
 
 La combinación espacio y clave es única y la base de datos rechaza claves fuera
-del catálogo. Los cinco módulos comienzan activos. `tasks` tiene
+del catálogo. Los cinco módulos comienzan activos. `tasks` y `shopping` tienen
 `available=true`; en los demás, `available=false` impide abrirlos hasta que se
 implemente su funcionalidad.
 
@@ -99,7 +100,7 @@ La pantalla promocional también refleja los cinco módulos del catálogo inicia
 
 ## Fuera de alcance
 
-- Modelos y endpoints de compras, deseos, calendario o gastos.
+- Modelos y endpoints de deseos, calendario o gastos.
 - Panel inicial configurable.
 - Activación distinta para miembros del mismo espacio.
 - Dependencias entre módulos.
