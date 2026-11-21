@@ -88,6 +88,7 @@ export function App() {
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const [menuSpaces, setMenuSpaces] = useState<Space[]>([]);
   const [menuModules, setMenuModules] = useState<Record<number, SpaceModuleConfiguration[]>>({});
+  const [expandedMenuSpaceId, setExpandedMenuSpaceId] = useState<number | null>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -407,7 +408,10 @@ export function App() {
               aria-expanded={profileMenuOpen}
               aria-label={`Abrir menú de ${displayName}`}
               className="header-avatar"
-              onClick={() => setProfileMenuOpen(true)}
+              onClick={() => {
+                setExpandedMenuSpaceId(null);
+                setProfileMenuOpen(true);
+              }}
               ref={profileButtonRef}
               type="button"
             >
@@ -595,18 +599,40 @@ export function App() {
             <nav className="profile-menu__navigation" aria-label="Opciones personales">
               <div className="profile-menu__spaces">
                 <span className="profile-menu__section-label">Mis espacios</span>
-                {menuSpaces.map((space) => (
-                  <div className="profile-menu__space" key={space.id}>
-                    <strong><Icon name={space.kind === 'personal' ? 'home' : 'users'} />{space.name}</strong>
-                    <div className="profile-menu__modules">
-                      {menuModules[space.id]?.filter((module) => module.enabled && module.available).map((module) => (
-                        <button key={module.key} onClick={() => openMenuModule(space, module.key)} type="button">
-                          <Icon name={module.icon} />{module.name}
-                        </button>
-                      ))}
+                {menuSpaces.map((space) => {
+                  const spaceModules = menuModules[space.id]?.filter(
+                    (module) => module.enabled && module.available,
+                  ) ?? [];
+                  const expanded = expandedMenuSpaceId === space.id;
+                  const modulesId = `profile-menu-space-${space.id}-modules`;
+
+                  return (
+                    <div className="profile-menu__space" key={space.id}>
+                      <button
+                        aria-controls={modulesId}
+                        aria-expanded={expanded}
+                        className="profile-menu__space-toggle"
+                        onClick={() => setExpandedMenuSpaceId(expanded ? null : space.id)}
+                        type="button"
+                      >
+                        <Icon name={space.kind === 'personal' ? 'home' : 'users'} />
+                        <strong>{space.name}</strong>
+                        <Icon name="chevron" />
+                      </button>
+                      {expanded ? (
+                        <div className="profile-menu__modules" id={modulesId}>
+                          {spaceModules.length > 0 ? spaceModules.map((module) => (
+                            <button key={module.key} onClick={() => openMenuModule(space, module.key)} type="button">
+                              <Icon name={module.icon} />{module.name}
+                            </button>
+                          )) : (
+                            <p>Sin módulos activos</p>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <button onClick={() => openView('modules')} type="button">
                 <span className="profile-menu__item-icon"><Icon name="settings" /></span>

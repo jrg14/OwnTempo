@@ -1914,27 +1914,58 @@ details[open] > summary > .icon:last-child {
 }
 
 .profile-menu__space + .profile-menu__space {
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
   border-top: 1px solid #edf2f0;
 }
 
-.profile-menu__space > strong {
-  display: flex;
+.profile-menu__space-toggle {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
+  border: 0;
+  border-radius: 10px;
   color: #18302b;
-  font-size: 0.9rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
-.profile-menu__space > strong .icon {
+.profile-menu__space-toggle strong {
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu__space-toggle .icon:first-child {
   width: 17px;
   height: 17px;
   color: #1f6b5c;
 }
 
+.profile-menu__space-toggle .icon:last-child {
+  width: 18px;
+  height: 18px;
+  color: #769089;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-menu__space-toggle[aria-expanded="true"] {
+  color: #174f45;
+  background: #f0f6f4;
+}
+
+.profile-menu__space-toggle[aria-expanded="true"] .icon:last-child {
+  transform: rotate(180deg);
+}
+
 .profile-menu__modules {
-  margin: 0.45rem 0 0 1.55rem;
+  margin: 0.25rem 0 0 1.55rem;
   display: grid;
   gap: 0.15rem;
 }
@@ -1963,6 +1994,13 @@ details[open] > summary > .icon:last-child {
 .profile-menu__modules .icon {
   width: 16px;
   height: 16px;
+}
+
+.profile-menu__modules p {
+  margin: 0;
+  padding: 0.5rem 0.45rem;
+  color: #60736e;
+  font-size: 0.78rem;
 }
 
 .profile-menu__navigation > button + button {
@@ -2092,6 +2130,7 @@ details[open] > summary > .icon:last-child {
   .module-navigation button:hover,
   .bottom-navigation a:hover,
   .profile-menu__close:hover,
+  .profile-menu__space-toggle:hover,
   .profile-menu__navigation > button:hover {
     color: #174f45;
     background: #e9f2ef;
