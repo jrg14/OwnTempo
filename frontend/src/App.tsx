@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { fetchSpaces, type Space } from './api/spaces';
+import { fetchSpaceModules, type SpaceModuleConfiguration } from './api/modules';
 import { AccountCard } from './components/account-card';
 import { CalendarWorkspace } from './components/calendar-workspace';
 import { ExpensesWorkspace } from './components/expenses-workspace';
@@ -14,7 +15,7 @@ import { WishlistWorkspace } from './components/wishlist-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
+type AppView = 'home' | 'spaces' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
@@ -85,7 +86,30 @@ export function App() {
   const [expensesSpace, setExpensesSpace] = useState<Space | null>(null);
   const [expensesSpaceId, setExpensesSpaceId] = useState<number | null>(initialExpensesSpaceId);
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
+  const [menuSpaces, setMenuSpaces] = useState<Space[]>([]);
+  const [menuModules, setMenuModules] = useState<Record<number, SpaceModuleConfiguration[]>>({});
   const profileButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen || !auth.user) return;
+    let active = true;
+    fetchSpaces()
+      .then(async (spaces) => {
+        const entries = await Promise.all(
+          spaces.map(async (space) => [space.id, await fetchSpaceModules(space.id)] as const),
+        );
+        if (!active) return;
+        setMenuSpaces(spaces);
+        setMenuModules(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (active) {
+          setMenuSpaces([]);
+          setMenuModules({});
+        }
+      });
+    return () => { active = false; };
+  }, [auth.user, profileMenuOpen]);
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -358,6 +382,16 @@ export function App() {
     window.scrollTo({ top: 0 });
   };
 
+  const openMenuModule = (space: Space, moduleKey: SpaceModuleConfiguration['key']) => {
+    const module = menuModules[space.id]?.find((item) => item.key === moduleKey);
+    if (!module?.enabled || !module.available) return;
+    if (moduleKey === 'tasks') openTasks(space);
+    if (moduleKey === 'shopping') openShopping(space);
+    if (moduleKey === 'wishlist') openWishlist(space);
+    if (moduleKey === 'calendar') openCalendar(space);
+    if (moduleKey === 'expenses') openExpenses(space);
+  };
+
   return (
     <main className="app-page">
       <div className="app-shell">
@@ -414,6 +448,28 @@ export function App() {
               key={auth.user.id}
               onSave={auth.updateAccount}
               user={auth.user}
+            />
+          </section>
+        ) : null}
+
+        {activeView === 'spaces' ? (
+          <section className="app-subpage" aria-labelledby="spaces-page-title">
+            <button className="back-button" onClick={goHome} type="button">
+              <Icon name="arrow-left" />
+              Volver al inicio
+            </button>
+            <header className="subpage-heading">
+              <h1 id="spaces-page-title">Gestionar espacios</h1>
+              <p>Administra tus espacios, miembros e invitaciones.</p>
+            </header>
+            <SpacesWorkspace
+              mode="manage"
+              notice={homeNotice}
+              onOpenCalendar={openCalendar}
+              onOpenExpenses={openExpenses}
+              onOpenShopping={openShopping}
+              onOpenTasks={openTasks}
+              onOpenWishlist={openWishlist}
             />
           </section>
         ) : null}
@@ -493,14 +549,6 @@ export function App() {
         ) : null}
       </div>
 
-      {activeView === 'home' ? (
-        <nav className="bottom-navigation" aria-label="Navegación principal">
-          <a href="#home"><Icon name="home" /><span>Inicio</span></a>
-          <a href="#space-modules"><Icon name="activity" /><span>Módulos</span></a>
-          <a href="#space-management"><Icon name="users" /><span>Gestionar</span></a>
-        </nav>
-      ) : null}
-
       {profileMenuOpen ? (
         <div className="profile-menu-layer">
           <button
@@ -536,6 +584,26 @@ export function App() {
             </header>
 
             <nav className="profile-menu__navigation" aria-label="Opciones personales">
+              <div className="profile-menu__spaces">
+                <span className="profile-menu__section-label">Mis espacios</span>
+                {menuSpaces.map((space) => (
+                  <div className="profile-menu__space" key={space.id}>
+                    <strong><Icon name={space.kind === 'personal' ? 'home' : 'users'} />{space.name}</strong>
+                    <div className="profile-menu__modules">
+                      {menuModules[space.id]?.filter((module) => module.enabled && module.available).map((module) => (
+                        <button key={module.key} onClick={() => openMenuModule(space, module.key)} type="button">
+                          <Icon name={module.icon} />{module.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => openView('spaces')} type="button">
+                <span className="profile-menu__item-icon"><Icon name="users" /></span>
+                <span><strong>Gestionar espacios</strong><small>Crear, editar y administrar miembros</small></span>
+                <Icon name="arrow-right" />
+              </button>
               <button onClick={() => openView('account')} type="button">
                 <span className="profile-menu__item-icon"><Icon name="settings" /></span>
                 <span>

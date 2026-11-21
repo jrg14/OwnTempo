@@ -8,6 +8,7 @@ import { SharedSpaceCard } from './shared-space-card';
 import { SpaceModulesPanel } from './space-modules-panel';
 
 type SpacesWorkspaceProps = {
+  mode?: 'home' | 'manage';
   notice?: string | null;
   onOpenCalendar: (space: Space) => void;
   onOpenExpenses: (space: Space) => void;
@@ -16,7 +17,7 @@ type SpacesWorkspaceProps = {
   onOpenWishlist: (space: Space) => void;
 };
 
-export function SpacesWorkspace({ notice, onOpenCalendar, onOpenExpenses, onOpenShopping, onOpenTasks, onOpenWishlist }: SpacesWorkspaceProps) {
+export function SpacesWorkspace({ mode = 'home', notice, onOpenCalendar, onOpenExpenses, onOpenShopping, onOpenTasks, onOpenWishlist }: SpacesWorkspaceProps) {
   const spaces = useSpaces();
   const [newSpaceName, setNewSpaceName] = useState('');
 
@@ -46,8 +47,28 @@ export function SpacesWorkspace({ notice, onOpenCalendar, onOpenExpenses, onOpen
     );
   }
 
+  if (mode === 'home') {
+    return (
+      <div className="spaces-workspace workspace-home workspace-home--config-only">
+        {spaces.error ? <p className="form-error" role="alert">{spaces.error}</p> : null}
+        {spaces.spaces.map((space) => (
+          <section className="space-config-section" key={space.id} aria-labelledby={`space-config-title-${space.id}`}>
+            <h1 id={`space-config-title-${space.id}`}>{space.name}</h1>
+            <SpaceModulesPanel
+              key={`modules-${space.id}`}
+              onOpenModule={() => undefined}
+              showHeading={false}
+              showNavigation={false}
+              space={space}
+            />
+          </section>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="spaces-workspace workspace-home">
+    <div className="spaces-workspace workspace-home workspace-management-page">
       <div className="active-space-header">
         <div className="active-space-copy">
           <h1>{spaces.activeSpace?.name ?? 'Tus espacios'}</h1>

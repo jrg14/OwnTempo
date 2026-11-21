@@ -12,9 +12,16 @@ import { Icon } from './icon';
 type SpaceModulesPanelProps = {
   onOpenModule: (moduleKey: SpaceModuleConfiguration['key']) => void;
   space: Space;
+  showNavigation?: boolean;
+  showHeading?: boolean;
 };
 
-export function SpaceModulesPanel({ onOpenModule, space }: SpaceModulesPanelProps) {
+export function SpaceModulesPanel({
+  onOpenModule,
+  showHeading = true,
+  showNavigation = true,
+  space,
+}: SpaceModulesPanelProps) {
   const [modules, setModules] = useState<SpaceModuleConfiguration[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -69,9 +76,11 @@ export function SpaceModulesPanel({ onOpenModule, space }: SpaceModulesPanelProp
       id="space-modules"
       aria-labelledby="space-modules-title"
     >
-      <div className="module-panel-heading">
-        <h2 id="space-modules-title">¿Qué quieres organizar hoy?</h2>
-      </div>
+      {showHeading ? (
+        <div className="module-panel-heading">
+          <h2 id="space-modules-title">¿Qué quieres organizar hoy?</h2>
+        </div>
+      ) : null}
 
       {error ? <p className="form-error" role="alert">{error}</p> : null}
 
@@ -79,7 +88,7 @@ export function SpaceModulesPanel({ onOpenModule, space }: SpaceModulesPanelProp
         <p className="muted-status" role="status">Cargando módulos…</p>
       ) : (
         <>
-          {navigableModules.length > 0 ? (
+          {showNavigation && navigableModules.length > 0 ? (
             <nav className="module-navigation" aria-label="Módulos activos">
               {navigableModules.map((configuration) => (
                 <button key={configuration.key} onClick={() => onOpenModule(configuration.key)} type="button">
@@ -94,12 +103,12 @@ export function SpaceModulesPanel({ onOpenModule, space }: SpaceModulesPanelProp
                 </button>
               ))}
             </nav>
-          ) : (
+          ) : showNavigation ? (
             <p className="module-empty-state">
               Todavía no hay módulos disponibles para abrir. Puedes dejar preparada
               su activación mientras construimos cada funcionalidad.
             </p>
-          )}
+          ) : null}
 
           {isOwner ? (
             <details className="module-settings">
