@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.modules",
     "apps.tasks",
     "apps.shopping",
+    "apps.wishlist",
 ]
 
 MIDDLEWARE = [

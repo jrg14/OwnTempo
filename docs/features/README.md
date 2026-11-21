@@ -14,6 +14,7 @@ y verificado en OwnTempo. No se usa para propuestas ni diseños futuros.
 - [Plataforma modular por espacio](modular-platform.md)
 - [Tareas personales y compartidas](tasks.md)
 - [Listas de la compra personales y compartidas](shopping-lists.md)
+- [Lista de deseos personal y compartida](wishlist.md)
 
 Cada documento debe describir el comportamiento real, arquitectura, modelo de
 datos, API, permisos, decisiones técnicas y pruebas asociadas.

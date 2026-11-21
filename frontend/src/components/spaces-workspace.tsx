@@ -11,9 +11,10 @@ type SpacesWorkspaceProps = {
   notice?: string | null;
   onOpenShopping: (space: Space) => void;
   onOpenTasks: (space: Space) => void;
+  onOpenWishlist: (space: Space) => void;
 };
 
-export function SpacesWorkspace({ notice, onOpenShopping, onOpenTasks }: SpacesWorkspaceProps) {
+export function SpacesWorkspace({ notice, onOpenShopping, onOpenTasks, onOpenWishlist }: SpacesWorkspaceProps) {
   const spaces = useSpaces();
   const [newSpaceName, setNewSpaceName] = useState('');
 
@@ -122,6 +123,7 @@ export function SpacesWorkspace({ notice, onOpenShopping, onOpenTasks }: SpacesW
             onOpenModule={(moduleKey) => {
               if (moduleKey === 'tasks') onOpenTasks(spaces.activeSpace!);
               if (moduleKey === 'shopping') onOpenShopping(spaces.activeSpace!);
+              if (moduleKey === 'wishlist') onOpenWishlist(spaces.activeSpace!);
             }}
             space={spaces.activeSpace}
           />

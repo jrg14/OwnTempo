@@ -37,6 +37,8 @@ MODULE_CATALOG = (
         description="Guarda productos, experiencias e ideas para más adelante.",
         icon="heart",
         route_segment="wishlist",
+        app_label="wishlist",
+        available=True,
     ),
     ModuleDefinition(
         key="calendar",

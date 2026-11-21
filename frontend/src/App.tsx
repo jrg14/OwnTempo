@@ -8,10 +8,11 @@ import { LoginScreen } from './components/login-screen';
 import { SpacesWorkspace } from './components/spaces-workspace';
 import { ShoppingWorkspace } from './components/shopping-workspace';
 import { TasksWorkspace } from './components/tasks-workspace';
+import { WishlistWorkspace } from './components/wishlist-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping';
+type AppView = 'home' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
@@ -20,6 +21,11 @@ function taskSpaceIdFromLocation() {
 
 function shoppingSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/shopping\/?$/);
+  return match ? Number(match[1]) : null;
+}
+
+function wishlistSpaceIdFromLocation() {
+  const match = window.location.pathname.match(/^\/spaces\/(\d+)\/wishlist\/?$/);
   return match ? Number(match[1]) : null;
 }
 
@@ -39,14 +45,23 @@ export function App() {
   const health = useHealthCheck();
   const initialTaskSpaceId = taskSpaceIdFromLocation();
   const initialShoppingSpaceId = shoppingSpaceIdFromLocation();
+  const initialWishlistSpaceId = wishlistSpaceIdFromLocation();
   const [activeView, setActiveView] = useState<AppView>(
-    initialTaskSpaceId ? 'tasks' : initialShoppingSpaceId ? 'shopping' : 'home',
+    initialTaskSpaceId
+      ? 'tasks'
+      : initialShoppingSpaceId
+        ? 'shopping'
+        : initialWishlistSpaceId
+          ? 'wishlist'
+          : 'home',
   );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [taskSpace, setTaskSpace] = useState<Space | null>(null);
   const [taskSpaceId, setTaskSpaceId] = useState<number | null>(initialTaskSpaceId);
   const [shoppingSpace, setShoppingSpace] = useState<Space | null>(null);
   const [shoppingSpaceId, setShoppingSpaceId] = useState<number | null>(initialShoppingSpaceId);
+  const [wishlistSpace, setWishlistSpace] = useState<Space | null>(null);
+  const [wishlistSpaceId, setWishlistSpaceId] = useState<number | null>(initialWishlistSpaceId);
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -95,11 +110,16 @@ export function App() {
     const handleNavigation = () => {
       const routeSpaceId = taskSpaceIdFromLocation();
       const routeShoppingSpaceId = shoppingSpaceIdFromLocation();
+      const routeWishlistSpaceId = wishlistSpaceIdFromLocation();
       setTaskSpaceId(routeSpaceId);
       setTaskSpace(null);
       setShoppingSpaceId(routeShoppingSpaceId);
       setShoppingSpace(null);
-      setActiveView(routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : 'home');
+      setWishlistSpaceId(routeWishlistSpaceId);
+      setWishlistSpace(null);
+      setActiveView(
+        routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : routeWishlistSpaceId ? 'wishlist' : 'home',
+      );
     };
     window.addEventListener('popstate', handleNavigation);
     return () => window.removeEventListener('popstate', handleNavigation);
@@ -151,6 +171,25 @@ export function App() {
     return () => { active = false; };
   }, [auth.user, shoppingSpace, shoppingSpaceId]);
 
+  useEffect(() => {
+    if (!auth.user || !wishlistSpaceId || wishlistSpace?.id === wishlistSpaceId) return;
+    let active = true;
+    fetchSpaces()
+      .then((spaces) => {
+        if (!active) return;
+        const space = spaces.find((candidate) => candidate.id === wishlistSpaceId);
+        if (space) setWishlistSpace(space);
+        else {
+          setHomeNotice('Ese espacio ya no está disponible.');
+          window.history.replaceState({}, '', '/');
+          setWishlistSpaceId(null);
+          setActiveView('home');
+        }
+      })
+      .catch(() => { if (active) setHomeNotice('No pudimos abrir el espacio solicitado.'); });
+    return () => { active = false; };
+  }, [auth.user, wishlistSpace, wishlistSpaceId]);
+
   const goHome = useCallback(() => {
     if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
     setActiveView('home');
@@ -158,6 +197,8 @@ export function App() {
     setTaskSpace(null);
     setShoppingSpaceId(null);
     setShoppingSpace(null);
+    setWishlistSpaceId(null);
+    setWishlistSpace(null);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -168,6 +209,11 @@ export function App() {
 
   const handleShoppingUnavailable = useCallback(() => {
     setHomeNotice('El módulo de listas de la compra se ha desactivado en este espacio.');
+    goHome();
+  }, [goHome]);
+
+  const handleWishlistUnavailable = useCallback(() => {
+    setHomeNotice('El módulo de lista de deseos se ha desactivado en este espacio.');
     goHome();
   }, [goHome]);
 
@@ -205,6 +251,15 @@ export function App() {
     window.scrollTo({ top: 0 });
   };
 
+  const openWishlist = (space: Space) => {
+    window.history.pushState({}, '', `/spaces/${space.id}/wishlist/`);
+    setHomeNotice(null);
+    setWishlistSpace(space);
+    setWishlistSpaceId(space.id);
+    setActiveView('wishlist');
+    window.scrollTo({ top: 0 });
+  };
+
   return (
     <main className="app-page">
       <div className="app-shell">
@@ -236,6 +291,7 @@ export function App() {
                 notice={homeNotice}
                 onOpenShopping={openShopping}
                 onOpenTasks={openTasks}
+                onOpenWishlist={openWishlist}
               />
             </section>
             <footer className="page-footer">OwnTempo · A tu ritmo</footer>
@@ -302,6 +358,16 @@ export function App() {
             space={shoppingSpace}
           />
         ) : activeView === 'shopping' ? (
+          <div className="app-subpage" role="status">Preparando el espacio…</div>
+        ) : null}
+
+        {activeView === 'wishlist' && wishlistSpace ? (
+          <WishlistWorkspace
+            onBack={goHome}
+            onModuleUnavailable={handleWishlistUnavailable}
+            space={wishlistSpace}
+          />
+        ) : activeView === 'wishlist' ? (
           <div className="app-subpage" role="status">Preparando el espacio…</div>
         ) : null}
       </div>
