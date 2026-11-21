@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.spaces.models import Space
+
 from .catalog import get_module_definition
 from .models import SpaceModule
 
@@ -50,3 +52,15 @@ class SpaceModuleSerializer(serializers.ModelSerializer):
     def get_route(self, configuration):
         definition = self._definition(configuration)
         return f"/spaces/{configuration.space_id}/{definition.route_segment}/"
+
+    def validate_enabled(self, value):
+        definition = self._definition(self.instance)
+        if (
+            value
+            and definition.personal_only
+            and self.instance.space.kind != Space.Kind.PERSONAL
+        ):
+            raise serializers.ValidationError(
+                "Este módulo solo está disponible en espacios personales."
+            )
+        return value

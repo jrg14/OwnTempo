@@ -1,10 +1,10 @@
 import { mutate, request } from './client';
 
 export type ModuleCatalogEntry = {
-  key: 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
+  key: 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses' | 'training';
   name: string;
   description: string;
-  icon: 'check' | 'cart' | 'heart' | 'calendar' | 'wallet';
+  icon: 'check' | 'cart' | 'heart' | 'calendar' | 'wallet' | 'activity';
   app_label: string | null;
   available: boolean;
 };

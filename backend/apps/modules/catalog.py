@@ -10,6 +10,7 @@ class ModuleDefinition:
     route_segment: str
     app_label: str | None = None
     available: bool = False
+    personal_only: bool = False
 
 
 MODULE_CATALOG = (
@@ -57,6 +58,16 @@ MODULE_CATALOG = (
         route_segment="expenses",
         app_label="expenses",
         available=True,
+    ),
+    ModuleDefinition(
+        key="training",
+        name="Entrenamiento",
+        description="Registra fuerza, pasos diarios y evolución de tu salud.",
+        icon="activity",
+        route_segment="training",
+        app_label="training",
+        available=True,
+        personal_only=True,
     ),
 )
 

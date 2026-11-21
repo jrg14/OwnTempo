@@ -17,6 +17,7 @@ y verificado en OwnTempo. No se usa para propuestas ni diseños futuros.
 - [Lista de deseos personal y compartida](wishlist.md)
 - [Calendario personal y compartido](calendar.md)
 - [Gastos comunes y personales](expenses.md)
+- [Entrenamiento personal](training.md)
 
 Cada documento debe describir el comportamiento real, arquitectura, modelo de
 datos, API, permisos, decisiones técnicas y pruebas asociadas.

@@ -11,11 +11,12 @@ import { LoginScreen } from './components/login-screen';
 import { SpacesWorkspace } from './components/spaces-workspace';
 import { ShoppingWorkspace } from './components/shopping-workspace';
 import { TasksWorkspace } from './components/tasks-workspace';
+import { TrainingWorkspace } from './components/training-workspace';
 import { WishlistWorkspace } from './components/wishlist-workspace';
 import { useAuth } from './hooks/use-auth';
 import { useHealthCheck } from './hooks/use-health-check';
 
-type AppView = 'home' | 'modules' | 'spaces' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses';
+type AppView = 'home' | 'modules' | 'spaces' | 'account' | 'diagnostics' | 'tasks' | 'shopping' | 'wishlist' | 'calendar' | 'expenses' | 'training';
 
 function taskSpaceIdFromLocation() {
   const match = window.location.pathname.match(/^\/spaces\/(\d+)\/tasks\/?$/);
@@ -42,6 +43,11 @@ function expensesSpaceIdFromLocation() {
   return match ? Number(match[1]) : null;
 }
 
+function trainingSpaceIdFromLocation() {
+  const match = window.location.pathname.match(/^\/spaces\/(\d+)\/training\/?$/);
+  return match ? Number(match[1]) : null;
+}
+
 function LoadingScreen() {
   return (
     <main className="auth-page">
@@ -61,6 +67,7 @@ export function App() {
   const initialWishlistSpaceId = wishlistSpaceIdFromLocation();
   const initialCalendarSpaceId = calendarSpaceIdFromLocation();
   const initialExpensesSpaceId = expensesSpaceIdFromLocation();
+  const initialTrainingSpaceId = trainingSpaceIdFromLocation();
   const [activeView, setActiveView] = useState<AppView>(
     initialTaskSpaceId
       ? 'tasks'
@@ -72,7 +79,9 @@ export function App() {
             ? 'calendar'
             : initialExpensesSpaceId
               ? 'expenses'
-            : 'home',
+              : initialTrainingSpaceId
+                ? 'training'
+                : 'home',
   );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [taskSpace, setTaskSpace] = useState<Space | null>(null);
@@ -85,6 +94,8 @@ export function App() {
   const [calendarSpaceId, setCalendarSpaceId] = useState<number | null>(initialCalendarSpaceId);
   const [expensesSpace, setExpensesSpace] = useState<Space | null>(null);
   const [expensesSpaceId, setExpensesSpaceId] = useState<number | null>(initialExpensesSpaceId);
+  const [trainingSpace, setTrainingSpace] = useState<Space | null>(null);
+  const [trainingSpaceId, setTrainingSpaceId] = useState<number | null>(initialTrainingSpaceId);
   const [homeNotice, setHomeNotice] = useState<string | null>(null);
   const [menuSpaces, setMenuSpaces] = useState<Space[]>([]);
   const [menuModules, setMenuModules] = useState<Record<number, SpaceModuleConfiguration[]>>({});
@@ -160,6 +171,7 @@ export function App() {
       const routeWishlistSpaceId = wishlistSpaceIdFromLocation();
       const routeCalendarSpaceId = calendarSpaceIdFromLocation();
       const routeExpensesSpaceId = expensesSpaceIdFromLocation();
+      const routeTrainingSpaceId = trainingSpaceIdFromLocation();
       setTaskSpaceId(routeSpaceId);
       setTaskSpace(null);
       setShoppingSpaceId(routeShoppingSpaceId);
@@ -170,8 +182,10 @@ export function App() {
       setCalendarSpace(null);
       setExpensesSpaceId(routeExpensesSpaceId);
       setExpensesSpace(null);
+      setTrainingSpaceId(routeTrainingSpaceId);
+      setTrainingSpace(null);
       setActiveView(
-        routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : routeWishlistSpaceId ? 'wishlist' : routeCalendarSpaceId ? 'calendar' : routeExpensesSpaceId ? 'expenses' : 'home',
+        routeSpaceId ? 'tasks' : routeShoppingSpaceId ? 'shopping' : routeWishlistSpaceId ? 'wishlist' : routeCalendarSpaceId ? 'calendar' : routeExpensesSpaceId ? 'expenses' : routeTrainingSpaceId ? 'training' : 'home',
       );
     };
     window.addEventListener('popstate', handleNavigation);
@@ -281,6 +295,25 @@ export function App() {
     return () => { active = false; };
   }, [auth.user, expensesSpace, expensesSpaceId]);
 
+  useEffect(() => {
+    if (!auth.user || !trainingSpaceId || trainingSpace?.id === trainingSpaceId) return;
+    let active = true;
+    fetchSpaces()
+      .then((spaces) => {
+        if (!active) return;
+        const space = spaces.find((candidate) => candidate.id === trainingSpaceId);
+        if (space?.kind === 'personal') setTrainingSpace(space);
+        else {
+          setHomeNotice('El entrenamiento solo está disponible en tu espacio personal.');
+          window.history.replaceState({}, '', '/');
+          setTrainingSpaceId(null);
+          setActiveView('home');
+        }
+      })
+      .catch(() => { if (active) setHomeNotice('No pudimos abrir el entrenamiento.'); });
+    return () => { active = false; };
+  }, [auth.user, trainingSpace, trainingSpaceId]);
+
   const goHome = useCallback(() => {
     if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
     setActiveView('home');
@@ -294,6 +327,8 @@ export function App() {
     setCalendarSpace(null);
     setExpensesSpaceId(null);
     setExpensesSpace(null);
+    setTrainingSpaceId(null);
+    setTrainingSpace(null);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -319,6 +354,11 @@ export function App() {
 
   const handleExpensesUnavailable = useCallback(() => {
     setHomeNotice('El módulo de gastos se ha desactivado en este espacio.');
+    goHome();
+  }, [goHome]);
+
+  const handleTrainingUnavailable = useCallback(() => {
+    setHomeNotice('El entrenamiento solo está disponible y activo en tu espacio personal.');
     goHome();
   }, [goHome]);
 
@@ -383,6 +423,16 @@ export function App() {
     window.scrollTo({ top: 0 });
   };
 
+  const openTraining = (space: Space) => {
+    if (space.kind !== 'personal') return;
+    window.history.pushState({}, '', `/spaces/${space.id}/training/`);
+    setHomeNotice(null);
+    setTrainingSpace(space);
+    setTrainingSpaceId(space.id);
+    setActiveView('training');
+    window.scrollTo({ top: 0 });
+  };
+
   const openMenuModule = (space: Space, moduleKey: SpaceModuleConfiguration['key']) => {
     const module = menuModules[space.id]?.find((item) => item.key === moduleKey);
     if (!module?.enabled || !module.available) return;
@@ -391,6 +441,7 @@ export function App() {
     if (moduleKey === 'wishlist') openWishlist(space);
     if (moduleKey === 'calendar') openCalendar(space);
     if (moduleKey === 'expenses') openExpenses(space);
+    if (moduleKey === 'training') openTraining(space);
   };
 
   return (
@@ -461,6 +512,7 @@ export function App() {
               onOpenExpenses={openExpenses}
               onOpenShopping={openShopping}
               onOpenTasks={openTasks}
+              onOpenTraining={openTraining}
               onOpenWishlist={openWishlist}
             />
           </section>
@@ -482,6 +534,7 @@ export function App() {
               onOpenExpenses={openExpenses}
               onOpenShopping={openShopping}
               onOpenTasks={openTasks}
+              onOpenTraining={openTraining}
               onOpenWishlist={openWishlist}
             />
           </section>
@@ -559,6 +612,16 @@ export function App() {
           />
         ) : activeView === 'expenses' ? (
           <div className="app-subpage" role="status">Preparando el espacio…</div>
+        ) : null}
+
+        {activeView === 'training' && trainingSpace ? (
+          <TrainingWorkspace
+            onBack={goHome}
+            onModuleUnavailable={handleTrainingUnavailable}
+            space={trainingSpace}
+          />
+        ) : activeView === 'training' ? (
+          <div className="app-subpage" role="status">Preparando tu entrenamiento…</div>
         ) : null}
       </div>
 

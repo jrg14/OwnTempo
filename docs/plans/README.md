@@ -16,6 +16,7 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 8. [Lista de deseos](wishlist.md)
 9. [Calendario personal y compartido](calendar.md)
 10. [Gastos comunes y ajuste de pareja](expenses.md)
+11. [Módulo de entrenamiento personal](training.md)
 
 El plan de gastos comunes queda definido, pendiente de implementación.
 

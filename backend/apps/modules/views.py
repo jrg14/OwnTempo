@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.spaces.permissions import IsSpaceMember, IsSpaceOwner
+from apps.spaces.models import Space
 
 from .catalog import MODULE_CATALOG
 from .models import SpaceModule
@@ -34,7 +35,12 @@ class SpaceModuleListView(ListAPIView):
     serializer_class = SpaceModuleSerializer
 
     def get_queryset(self):
-        return SpaceModule.objects.filter(space_id=self.kwargs["space_id"])
+        queryset = SpaceModule.objects.filter(space_id=self.kwargs["space_id"])
+        if Space.objects.filter(
+            pk=self.kwargs["space_id"], kind=Space.Kind.SHARED
+        ).exists():
+            queryset = queryset.exclude(module_key="training")
+        return queryset
 
 
 class SpaceModuleUpdateView(UpdateAPIView):

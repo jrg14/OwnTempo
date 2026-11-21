@@ -30,7 +30,7 @@ class ModuleCatalogTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_catalog_contains_exactly_the_five_initial_modules(self):
+    def test_catalog_contains_all_modules(self):
         self.client.force_authenticate(self.user)
 
         response = self.client.get(reverse("modules:catalog"))
@@ -46,6 +46,7 @@ class ModuleCatalogTests(APITestCase):
         self.assertTrue(availability["wishlist"])
         self.assertTrue(availability["calendar"])
         self.assertTrue(availability["expenses"])
+        self.assertTrue(availability["training"])
 
 
 class SpaceModuleModelTests(APITestCase):
@@ -75,6 +76,9 @@ class SpaceModuleModelTests(APITestCase):
         self.assertEqual(
             SpaceModule.objects.filter(space=space).count(),
             len(MODULE_KEYS),
+        )
+        self.assertFalse(
+            SpaceModule.objects.get(space=space, module_key="training").enabled
         )
 
     def test_space_and_module_key_are_unique(self):
@@ -140,7 +144,8 @@ class SpaceModuleApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(tuple(item["key"] for item in response.data), MODULE_KEYS)
+        shared_module_keys = tuple(key for key in MODULE_KEYS if key != "training")
+        self.assertEqual(tuple(item["key"] for item in response.data), shared_module_keys)
         self.assertTrue(all(item["enabled"] for item in response.data))
         availability = {item["key"]: item["available"] for item in response.data}
         self.assertTrue(availability["tasks"])
@@ -148,6 +153,20 @@ class SpaceModuleApiTests(APITestCase):
         self.assertTrue(availability["wishlist"])
         self.assertTrue(availability["calendar"])
         self.assertTrue(availability["expenses"])
+
+    def test_training_cannot_be_enabled_in_shared_space(self):
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.patch(
+            reverse(
+                "modules:space-module-update",
+                args=(self.space.id, "training"),
+            ),
+            {"enabled": True},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_outsider_cannot_list_space_modules(self):
         self.client.force_authenticate(self.outsider)

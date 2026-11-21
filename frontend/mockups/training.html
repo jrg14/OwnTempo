@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OwnTempo · Mockup de entrenamiento</title>
+    <style>
+      :root {
+        color: #18302b;
+        background: #edf3f0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --ink: #18302b;
+        --muted: #60736e;
+        --line: #d7e4df;
+        --surface: #ffffff;
+        --wash: #f7faf8;
+        --green: #1f6b5c;
+        --green-dark: #174f45;
+        --green-soft: #e4f0ec;
+        --amber: #efa94f;
+        --amber-soft: #fff2dc;
+        --blue: #4d7f9d;
+      }
+
+      * { box-sizing: border-box; }
+      body { min-width: 320px; min-height: 100vh; margin: 0; }
+      button, input, select { font: inherit; }
+      button, select { cursor: pointer; }
+      button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #e6a75a; outline-offset: 3px; }
+
+      .stage { min-height: 100vh; padding: 28px; }
+      .app { width: min(100%, 1180px); min-height: 820px; margin: auto; display: grid; grid-template-columns: 238px minmax(0, 1fr); overflow: hidden; border: 1px solid #d6e2de; border-radius: 24px; background: var(--surface); box-shadow: 0 24px 70px rgb(24 48 43 / 12%); }
+      .rail { padding: 24px 16px; display: flex; flex-direction: column; background: var(--green-dark); color: #fff; }
+      .brand { display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 1.05rem; font-weight: 850; letter-spacing: -0.03em; }
+      .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: #2b7c6b; }
+      .brand-mark::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
+      .rail-label { margin: 44px 10px 10px; color: #9bc0b5; font-size: 0.68rem; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }
+      .nav { display: grid; gap: 5px; }
+      .nav a { min-height: 44px; padding: 0 11px; display: flex; align-items: center; gap: 11px; border-radius: 11px; color: #c7ddd6; font-size: 0.86rem; font-weight: 700; text-decoration: none; }
+      .nav a svg { width: 18px; height: 18px; flex: 0 0 auto; }
+      .nav a[aria-current="page"] { color: #fff; background: #286b5e; }
+      .rail-footer { margin-top: auto; padding: 12px 10px 0; border-top: 1px solid rgb(255 255 255 / 14%); color: #b7d2ca; font-size: 0.77rem; line-height: 1.45; }
+      .rail-footer strong { display: block; color: #fff; font-size: 0.85rem; }
+
+      .content { min-width: 0; background: #fbfdfc; }
+      .topbar { min-height: 72px; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); background: #fff; }
+      .breadcrumbs { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+      .breadcrumbs strong { color: var(--ink); }
+      .profile { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+      .avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--green); font-weight: 850; }
+      main { max-width: 1050px; margin: 0 auto; padding: 34px 32px 48px; }
+      .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+      .page-head h1 { margin: 0; color: var(--ink); font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1; letter-spacing: -0.045em; }
+      .page-head p { max-width: 48ch; margin: 9px 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+      .date-control { min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 11px; color: var(--green); background: #fff; font-size: 0.8rem; font-weight: 800; }
+      .date-control svg { width: 16px; height: 16px; }
+
+      .tabs { margin: 28px 0 22px; display: flex; gap: 24px; border-bottom: 1px solid var(--line); }
+      .tab { min-height: 42px; padding: 0 2px; border: 0; border-bottom: 3px solid transparent; color: var(--muted); background: transparent; font-size: 0.82rem; font-weight: 850; }
+      .tab[aria-selected="true"] { border-color: var(--green); color: var(--green); }
+      .panel[hidden] { display: none; }
+
+      .today { padding: 22px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr); gap: 22px; border-radius: 18px; color: #fff; background: var(--green-dark); box-shadow: 0 14px 28px rgb(23 79 69 / 18%); }
+      .today-copy h2 { margin: 0; font-size: 1.05rem; letter-spacing: -0.02em; }
+      .today-copy p { margin: 7px 0 0; color: #c9ded8; font-size: 0.83rem; line-height: 1.45; }
+      .today-stats { margin-top: 26px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .today-stat { padding-top: 12px; border-top: 1px solid rgb(255 255 255 / 23%); }
+      .today-stat span { display: block; color: #b4d2c9; font-size: 0.72rem; font-weight: 700; }
+      .today-stat strong { display: block; margin-top: 5px; color: #fff; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+      .today-stat em { display: block; margin-top: 3px; color: #a5d1bf; font-size: 0.7rem; font-style: normal; }
+      .step-progress { align-self: center; padding: 16px; border-radius: 14px; background: rgb(255 255 255 / 10%); }
+      .step-progress header { display: flex; justify-content: space-between; gap: 12px; color: #d8ebe5; font-size: 0.78rem; font-weight: 750; }
+      .step-progress strong { color: #fff; font-size: 1.05rem; }
+      .step-bar { height: 9px; margin: 16px 0 8px; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 18%); }
+      .step-bar span { display: block; width: 68%; height: 100%; border-radius: inherit; background: var(--amber); }
+      .step-progress small { color: #b8d2ca; font-size: 0.7rem; }
+
+      .section-head { margin: 28px 0 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+      .section-head h2 { margin: 0; font-size: 1.08rem; letter-spacing: -0.025em; }
+      .section-head button, .link-button { border: 0; color: var(--green); background: transparent; font-size: 0.77rem; font-weight: 850; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .metric { min-height: 148px; padding: 17px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+      .metric header { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 0.76rem; font-weight: 800; }
+      .metric-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: var(--green); background: var(--green-soft); }
+      .metric-icon svg { width: 16px; height: 16px; }
+      .metric strong { display: block; margin-top: 20px; color: var(--ink); font-size: 1.65rem; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+      .metric footer { display: flex; align-items: center; gap: 6px; margin-top: 5px; color: var(--muted); font-size: 0.72rem; }
+      .trend-up { color: #218167; font-weight: 850; }
+      .trend-down { color: #ad6543; font-weight: 850; }
+
+      .lower-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 14px; }
+      .surface { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+      .surface header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .surface h3 { margin: 0; font-size: 0.96rem; }
+      .surface header p { margin: 4px 0 0; color: var(--muted); font-size: 0.73rem; }
+      .week-chart { height: 165px; margin-top: 16px; padding: 12px 2px 0; display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 10px; border-bottom: 1px solid var(--line); }
+      .day { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 7px; color: var(--muted); font-size: 0.68rem; }
+      .bar { width: min(30px, 70%); height: var(--height); border-radius: 7px 7px 2px 2px; background: #cfe2dc; }
+      .day.current .bar { background: var(--amber); }
+      .day span { font-weight: 750; }
+      .workout-list { margin: 16px 0 0; padding: 0; list-style: none; }
+      .workout-list li { min-height: 58px; padding: 10px 0; display: flex; align-items: center; gap: 11px; border-top: 1px solid #edf2f0; }
+      .workout-list li:first-child { border-top: 0; }
+      .exercise-dot { width: 10px; height: 36px; border-radius: 7px; background: var(--green); }
+      .exercise-copy { min-width: 0; flex: 1; }
+      .exercise-copy strong, .exercise-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .exercise-copy strong { font-size: 0.84rem; }
+      .exercise-copy span { margin-top: 3px; color: var(--muted); font-size: 0.72rem; }
+      .exercise-volume { color: var(--ink); font-size: 0.78rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+
+      .quick-add { margin-top: 26px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .quick-add button { min-height: 54px; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line); border-radius: 12px; color: var(--green); background: #fff; font-size: 0.75rem; font-weight: 850; }
+      .quick-add button:first-child { border-color: var(--amber); color: #754d18; background: var(--amber-soft); }
+      .quick-add svg { width: 16px; height: 16px; }
+
+      .form-panel { margin-top: 14px; padding: 18px; display: none; border: 1px solid #d9c59f; border-radius: 16px; background: #fffaf1; }
+      .form-panel.is-open { display: block; }
+      .form-panel header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .form-panel h3 { margin: 0; font-size: 0.95rem; }
+      .close { width: 32px; height: 32px; border: 0; border-radius: 9px; color: #765d38; background: #f5ead7; }
+      .form-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .form-grid label { display: grid; gap: 5px; color: #66553d; font-size: 0.72rem; font-weight: 800; }
+      .form-grid label:first-child { grid-column: 1 / -1; }
+      .form-grid input { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #d8c8aa; border-radius: 9px; color: var(--ink); background: #fff; }
+      .form-actions { margin-top: 14px; display: flex; gap: 8px; }
+      .primary { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; color: #fff; background: var(--green); font-size: 0.76rem; font-weight: 850; }
+      .secondary { min-height: 40px; padding: 0 14px; border: 1px solid #d8c8aa; border-radius: 9px; color: #765d38; background: transparent; font-size: 0.76rem; font-weight: 850; }
+
+      .empty-note { padding: 18px; border: 1px dashed #b8cec5; border-radius: 14px; color: var(--muted); background: var(--wash); font-size: 0.82rem; line-height: 1.5; }
+      .health-selector { margin-bottom: 14px; display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; background: #fff; }
+      .health-selector button { min-height: 72px; padding: 10px; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--ink); background: #fff; text-align: left; }
+      .health-selector button:nth-child(5n) { border-right: 0; }
+      .health-selector button:nth-child(n+6) { border-bottom: 0; }
+      .health-selector button:first-child { color: var(--green-dark); background: var(--green-soft); }
+      .health-selector span, .health-selector strong { display: block; }
+      .health-selector span { color: var(--muted); font-size: 0.66rem; font-weight: 750; }
+      .health-selector strong { margin-top: 5px; font-size: 0.86rem; }
+
+      @media (max-width: 820px) {
+        .stage { padding: 0; }
+        .app { min-height: 100vh; grid-template-columns: 1fr; border: 0; border-radius: 0; }
+        .rail { display: none; }
+        .topbar { padding-inline: 18px; }
+        main { padding: 26px 18px 38px; }
+        .page-head { align-items: flex-start; flex-direction: column; }
+        .date-control { align-self: stretch; justify-content: center; }
+      }
+
+      @media (max-width: 620px) {
+        .breadcrumbs { font-size: 0.72rem; }
+        .profile span { display: none; }
+        .today { grid-template-columns: 1fr; }
+        .step-progress { align-self: stretch; }
+        .grid, .lower-grid { grid-template-columns: 1fr; }
+        .metric { min-height: 122px; }
+        .metric strong { margin-top: 12px; }
+        .quick-add { grid-template-columns: 1fr; }
+        .quick-add button { justify-content: flex-start; padding-inline: 14px; }
+        .health-selector { grid-template-columns: repeat(2, 1fr); }
+        .health-selector button, .health-selector button:nth-child(5n), .health-selector button:nth-child(n+6) { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .health-selector button:nth-child(2n) { border-right: 0; }
+        .health-selector button:nth-child(n+9) { border-bottom: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="app">
+        <aside class="rail">
+          <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>OwnTempo</span></div>
+          <p class="rail-label">Tu espacio personal</p>
+          <nav class="nav" aria-label="Navegación del espacio personal">
+            <a href="#inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"/><path d="M6 10v10h12V10"/></svg>Inicio</a>
+            <a href="#tareas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5 11 13l4-5"/><path d="M5 4h14v16H5z"/></svg>Tareas</a>
+            <a href="#entrenamiento" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M7 8v8M17 8v8M4 10v4M20 10v4"/></svg>Entrenamiento</a>
+            <a href="#calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Calendario</a>
+          </nav>
+          <div class="rail-footer"><strong>Mi espacio</strong>Solo tú puedes ver tus datos de entrenamiento.</div>
+        </aside>
+
+        <div class="content">
+          <header class="topbar">
+            <div class="breadcrumbs"><span>Mi espacio</span><span aria-hidden="true">/</span><strong>Entrenamiento</strong></div>
+            <div class="profile"><span>Ana García</span><span class="avatar" aria-label="Perfil de Ana García">A</span></div>
+          </header>
+
+          <main>
+            <header class="page-head">
+              <div><h1>Entrenamiento</h1><p>Registra tu actividad de hoy y observa cómo avanzas semana a semana.</p></div>
+              <button class="date-control" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Hoy, 21 nov 2026</button>
+            </header>
+
+            <div class="tabs" role="tablist" aria-label="Secciones de entrenamiento">
+              <button class="tab" role="tab" aria-selected="true" aria-controls="summary-panel" data-tab="summary" type="button">Resumen</button>
+              <button class="tab" role="tab" aria-selected="false" aria-controls="strength-panel" data-tab="strength" type="button">Fuerza</button>
+              <button class="tab" role="tab" aria-selected="false" aria-controls="evolution-panel" data-tab="evolution" type="button">Salud</button>
+            </div>
+
+            <section class="panel" id="summary-panel" role="tabpanel">
+              <section class="today" aria-labelledby="today-title">
+                <div class="today-copy"><h2 id="today-title">Tu día, en marcha</h2><p>Has completado una sesión de fuerza. Aún tienes margen para acercarte a tu objetivo de pasos.</p><div class="today-stats"><div class="today-stat"><span>Entrenamiento</span><strong>1 sesión</strong><em>45 min · completado</em></div><div class="today-stat"><span>Última medición</span><strong>78,4 kg</strong><em>10 parámetros · hoy</em></div><div class="today-stat"><span>Última sesión</span><strong>Hoy</strong><em>Parte superior</em></div></div></div>
+                <div class="step-progress"><header><span>Pasos de hoy</span><strong>8.420</strong></header><div class="step-bar" aria-label="8420 de 12500 pasos"><span></span></div><small>4.080 pasos para alcanzar tu objetivo de 12.500</small></div>
+              </section>
+
+              <div class="section-head"><h2>Registro rápido</h2><span>Actualizado hace un momento</span></div>
+              <div class="quick-add"><button data-open="workout-form" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M7 8v8M17 8v8M4 10v4M20 10v4"/></svg>Añadir entrenamiento</button><button data-open="steps-form" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4c-1.6 0-2.8 1.3-2.8 2.8S11.4 10 13 10s2.8-1.2 2.8-2.8S14.6 4 13 4Z"/><path d="M8 20c.5-3 1.6-5.1 3.7-6.3 2.6-1.5 5.3-.2 5.9 2.7"/><path d="m8 14-3 3"/></svg>Registrar pasos</button><button data-open="weight-form" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>Añadir medición</button></div>
+
+              <div class="form-panel" id="workout-form"><header><h3>Nueva sesión de fuerza</h3><button class="close" data-close="workout-form" type="button" aria-label="Cerrar formulario">×</button></header><div class="form-grid"><label>Nombre de la sesión<input value="Parte superior" /></label><label>Fecha<input type="date" value="2026-11-21" /></label><label>Duración<input type="number" value="45" /></label></div><div class="form-actions"><button class="primary" type="button">Continuar con ejercicios</button><button class="secondary" data-close="workout-form" type="button">Cancelar</button></div></div>
+              <div class="form-panel" id="steps-form"><header><h3>Registrar pasos</h3><button class="close" data-close="steps-form" type="button" aria-label="Cerrar formulario">×</button></header><div class="form-grid"><label>Pasos del día<input type="number" value="8420" /></label><label>Fecha<input type="date" value="2026-11-21" /></label></div><div class="form-actions"><button class="primary" type="button">Guardar pasos</button><button class="secondary" data-close="steps-form" type="button">Cancelar</button></div></div>
+              <div class="form-panel" id="weight-form"><header><h3>Medición de la báscula</h3><button class="close" data-close="weight-form" type="button" aria-label="Cerrar formulario">×</button></header><div class="form-grid"><label>Peso (kg)<input type="number" step="0.1" value="78.4" /></label><label>IMC<input type="number" step="0.1" value="24.3" /></label><label>Grasa corporal (%)<input type="number" step="0.1" value="19.2" /></label><label>Grasa subcutánea (%)<input type="number" step="0.1" value="16.4" /></label><label>Grasa visceral<input type="number" step="0.1" value="7" /></label><label>Agua corporal (%)<input type="number" step="0.1" value="57.8" /></label><label>Masa muscular (kg)<input type="number" step="0.1" value="60.1" /></label><label>Masa ósea (kg)<input type="number" step="0.1" value="3.2" /></label><label>Tasa metabólica basal (kcal)<input type="number" value="1760" /></label><label>Edad metabólica<input type="number" value="34" /></label></div><div class="form-actions"><button class="primary" type="button">Guardar medición</button><button class="secondary" data-close="weight-form" type="button">Cancelar</button></div></div>
+
+              <div class="section-head"><h2>Esta semana</h2><button class="link-button" data-tab-link="evolution" type="button">Ver evolución completa</button></div>
+              <div class="lower-grid"><section class="surface"><header><div><h3>Pasos diarios</h3><p>Media: 8.045 pasos</p></div><span class="trend-up">+12%</span></header><div class="week-chart" aria-label="Gráfico de pasos de lunes a domingo"><div class="day"><div class="bar" style="--height: 55%"></div><span>L</span></div><div class="day"><div class="bar" style="--height: 67%"></div><span>M</span></div><div class="day"><div class="bar" style="--height: 48%"></div><span>X</span></div><div class="day"><div class="bar" style="--height: 82%"></div><span>J</span></div><div class="day"><div class="bar" style="--height: 71%"></div><span>V</span></div><div class="day current"><div class="bar" style="--height: 68%"></div><span>S</span></div><div class="day"><div class="bar" style="--height: 22%"></div><span>D</span></div></div></section><section class="surface"><header><div><h3>Última sesión</h3><p>Hoy · Parte superior</p></div><button class="link-button" data-tab-link="strength" type="button">Abrir</button></header><ul class="workout-list"><li><span class="exercise-dot"></span><div class="exercise-copy"><strong>Press banca</strong><span>4 series · 8–10 repeticiones</span></div><b class="exercise-volume">2.960 kg</b></li><li><span class="exercise-dot" style="background: var(--blue)"></span><div class="exercise-copy"><strong>Remo con barra</strong><span>4 series · 10 repeticiones</span></div><b class="exercise-volume">2.400 kg</b></li><li><span class="exercise-dot" style="background: var(--amber)"></span><div class="exercise-copy"><strong>Press militar</strong><span>3 series · 8 repeticiones</span></div><b class="exercise-volume">1.080 kg</b></li></ul></section></div>
+            </section>
+
+            <section class="panel" id="strength-panel" role="tabpanel" hidden>
+              <div class="section-head"><h2>Sesiones de fuerza</h2><button class="primary" data-open="workout-form-2" type="button">+ Nueva sesión</button></div><div class="surface"><header><div><h3>Hoy · Parte superior</h3><p>45 minutos · 3 ejercicios · 11 series</p></div><span class="trend-up">Completada</span></header><ul class="workout-list"><li><span class="exercise-dot"></span><div class="exercise-copy"><strong>Press banca</strong><span>60 kg × 10 · 70 kg × 8 · 70 kg × 8 · 65 kg × 10</span></div><b class="exercise-volume">2.960 kg</b></li><li><span class="exercise-dot" style="background: var(--blue)"></span><div class="exercise-copy"><strong>Remo con barra</strong><span>60 kg × 10 · 60 kg × 10 · 60 kg × 10 · 60 kg × 10</span></div><b class="exercise-volume">2.400 kg</b></li><li><span class="exercise-dot" style="background: var(--amber)"></span><div class="exercise-copy"><strong>Press militar</strong><span>45 kg × 8 · 45 kg × 8 · 45 kg × 8</span></div><b class="exercise-volume">1.080 kg</b></li></ul></div><div class="form-panel" id="workout-form-2"><header><h3>Nueva sesión de fuerza</h3><button class="close" data-close="workout-form-2" type="button" aria-label="Cerrar formulario">×</button></header><div class="form-grid"><label>Nombre de la sesión<input value="Pierna" /></label><label>Fecha<input type="date" value="2026-11-21" /></label><label>Duración<input type="number" placeholder="Minutos" /></label></div><div class="form-actions"><button class="primary" type="button">Añadir ejercicios</button><button class="secondary" data-close="workout-form-2" type="button">Cancelar</button></div></div></section>
+
+            <section class="panel" id="evolution-panel" role="tabpanel" hidden>
+              <div class="section-head"><div><h2>Salud</h2><p>Evolución de tu báscula inteligente</p></div><button class="date-control" type="button">Últimos 30 días</button></div><div class="health-selector"><button type="button"><span>Peso</span><strong>78,4 kg</strong></button><button type="button"><span>IMC</span><strong>24,3</strong></button><button type="button"><span>Grasa corporal</span><strong>19,2%</strong></button><button type="button"><span>Grasa subcutánea</span><strong>16,4%</strong></button><button type="button"><span>Grasa visceral</span><strong>7</strong></button><button type="button"><span>Agua corporal</span><strong>57,8%</strong></button><button type="button"><span>Masa muscular</span><strong>60,1 kg</strong></button><button type="button"><span>Masa ósea</span><strong>3,2 kg</strong></button><button type="button"><span>Metabolismo basal</span><strong>1.760 kcal</strong></button><button type="button"><span>Edad metabólica</span><strong>34 años</strong></button></div><section class="surface"><header><div><h3>Evolución del peso</h3><p>Selecciona cualquier parámetro para cambiar la gráfica</p></div><span class="trend-down">78,4 kg</span></header><svg viewBox="0 0 520 230" role="img" aria-label="Evolución del peso durante los últimos 30 días" style="width:100%;margin-top:20px"><path d="M20 190H500M20 130H500M20 70H500" fill="none" stroke="#e7efec"/><path d="M20 56 C72 82, 90 78, 126 96 S190 105, 222 125 S286 119, 323 142 S390 145, 430 164 S467 158, 500 178" fill="none" stroke="#1f6b5c" stroke-width="4" stroke-linecap="round"/><circle cx="500" cy="178" r="6" fill="#efa94f" stroke="#fff" stroke-width="3"/><text x="20" y="216" fill="#60736e" font-size="12">22 oct</text><text x="235" y="216" fill="#60736e" font-size="12">6 nov</text><text x="455" y="216" fill="#60736e" font-size="12">21 nov</text></svg></section>
+          </main>
+        </div>
+      </div>
+    </div>
+    <script>
+      const tabs = [...document.querySelectorAll('.tab')];
+      const panels = { summary: document.querySelector('#summary-panel'), strength: document.querySelector('#strength-panel'), evolution: document.querySelector('#evolution-panel') };
+      function selectTab(name) {
+        tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.tab === name)));
+        Object.entries(panels).forEach(([key, panel]) => { panel.hidden = key !== name; });
+      }
+      tabs.forEach((tab) => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
+      document.querySelectorAll('[data-tab-link]').forEach((button) => button.addEventListener('click', () => selectTab(button.dataset.tabLink)));
+      document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => {
+        document.querySelectorAll('.form-panel').forEach((panel) => panel.classList.remove('is-open'));
+        document.querySelector(`#${button.dataset.open}`)?.classList.add('is-open');
+      }));
+      document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => document.querySelector(`#${button.dataset.close}`)?.classList.remove('is-open')));
+    </script>
+  </body>
+</html>
