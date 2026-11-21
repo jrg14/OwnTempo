@@ -46,6 +46,8 @@ MODULE_CATALOG = (
         description="Planifica eventos personales y compartidos.",
         icon="calendar",
         route_segment="calendar",
+        app_label="calendar",
+        available=True,
     ),
     ModuleDefinition(
         key="expenses",

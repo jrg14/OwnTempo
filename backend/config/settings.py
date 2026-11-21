@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "apps.tasks",
     "apps.shopping",
     "apps.wishlist",
+    "apps.calendar",
 ]
 
 MIDDLEWARE = [

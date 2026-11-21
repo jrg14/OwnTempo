@@ -2,8 +2,9 @@
 
 ## Estado
 
-Implementada y verificada. `tasks`, `shopping` y `wishlist` están disponibles;
-la plataforma presenta los demás como próximos hasta implementar cada feature.
+Implementada y verificada. `tasks`, `shopping`, `wishlist` y `calendar` están
+disponibles; la plataforma presenta los demás como próximos hasta implementar
+cada feature.
 
 ## Catálogo
 
@@ -29,9 +30,9 @@ La app `apps.modules` define `SpaceModule`, con:
 - Fechas de creación y actualización.
 
 La combinación espacio y clave es única y la base de datos rechaza claves fuera
-del catálogo. Los cinco módulos comienzan activos. `tasks`, `shopping` y
-`wishlist` tienen `available=true`; en los demás, `available=false` impide
-abrirlos hasta que se implemente su funcionalidad.
+del catálogo. Los cinco módulos comienzan activos. `tasks`, `shopping`,
+`wishlist` y `calendar` tienen `available=true`; en `expenses`,
+`available=false` impide abrirlo hasta implementar su funcionalidad.
 
 Todos los espacios existentes reciben sus configuraciones mediante migración.
 Los espacios personales y compartidos nuevos las reciben dentro de su servicio
@@ -100,7 +101,7 @@ La pantalla promocional también refleja los cinco módulos del catálogo inicia
 
 ## Fuera de alcance
 
-- Modelos y endpoints de calendario o gastos.
+- Modelos y endpoints de gastos.
 - Panel inicial configurable.
 - Activación distinta para miembros del mismo espacio.
 - Dependencias entre módulos.

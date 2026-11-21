@@ -44,10 +44,11 @@ class ModuleCatalogTests(APITestCase):
         self.assertTrue(availability["tasks"])
         self.assertTrue(availability["shopping"])
         self.assertTrue(availability["wishlist"])
+        self.assertTrue(availability["calendar"])
         self.assertTrue(all(
             not available
             for key, available in availability.items()
-            if key not in {"tasks", "shopping", "wishlist"}
+            if key not in {"tasks", "shopping", "wishlist", "calendar"}
         ))
 
 
@@ -149,10 +150,11 @@ class SpaceModuleApiTests(APITestCase):
         self.assertTrue(availability["tasks"])
         self.assertTrue(availability["shopping"])
         self.assertTrue(availability["wishlist"])
+        self.assertTrue(availability["calendar"])
         self.assertTrue(all(
             not available
             for key, available in availability.items()
-            if key not in {"tasks", "shopping", "wishlist"}
+            if key not in {"tasks", "shopping", "wishlist", "calendar"}
         ))
 
     def test_outsider_cannot_list_space_modules(self):
@@ -248,7 +250,7 @@ class ActiveModulePermissionTests(APITestCase):
         )
 
     def test_unavailable_module_is_rejected_even_when_enabled(self):
-        self.view.kwargs["module_key"] = "calendar"
+        self.view.kwargs["module_key"] = "expenses"
         self.assertFalse(HasActiveModule().has_permission(None, self.view))
 
     def test_available_module_must_also_be_enabled(self):

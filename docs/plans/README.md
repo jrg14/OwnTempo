@@ -14,7 +14,8 @@ dependencias, modelo de datos, API, permisos, pruebas y criterios de aceptación
 6. [Módulo de tareas](tasks.md)
 7. [Listas de la compra](shopping-lists.md)
 8. [Lista de deseos](wishlist.md)
+9. [Calendario personal y compartido](calendar.md)
 
-Los planes específicos de calendario y gastos se redactarán
+Los planes específicos de gastos se redactarán
 antes de comenzar cada módulo, una vez estabilizada la base común.
 
