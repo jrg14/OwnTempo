@@ -236,32 +236,20 @@ Las decisiones tecnológicas podrán revisarse durante el desarrollo.
 ### Informes mensuales con IA local
 
 El módulo de entrenamiento puede generar informes privados mediante Ollama. La
-IA se ejecuta únicamente al activar el perfil opcional `ai` de Docker Compose:
-
-```bash
-docker compose --profile ai up -d
-docker compose --profile ai exec ollama ollama pull qwen2.5:3b-instruct
-```
-
-Después de descargar el modelo, la pestaña **Informes** permite seleccionar un
-mes, indicar el objetivo del periodo y encolar el análisis. El servicio
-`report-worker` procesa las solicitudes sin bloquear la API. El modelo de 3B
-ocupa aproximadamente 1,9 GB; se puede cambiar con `LOCAL_LLM_MODEL`.
+IA se ejecuta únicamente al activar el perfil opcional `ai` de Docker Compose.
+La pestaña **Informes** permite seleccionar un mes, indicar el objetivo del
+periodo y encolar el análisis. El servicio `report-worker` procesa las
+solicitudes sin bloquear la API.
 
 Ollama se ejecuta con `OLLAMA_NO_CLOUD=1` y su puerto no se publica en el host.
 Solo el worker puede acceder a su API mediante la red privada de Docker. La
 descarga inicial obtiene el modelo desde el registro de Ollama, pero los JSON de
 salud y entrenamiento no se envían fuera del despliegue local.
 
-Para ejecutar la aplicación sin IA local se mantiene el arranque habitual, sin
-el perfil:
-
-```bash
-docker compose up -d
-```
-
 Los totales, promedios y comparaciones se calculan en Django. Ollama solo recibe
 un JSON agregado y devuelve la interpretación, que se valida antes de guardarse.
+La instalación y el primer informe se explican paso a paso en
+[Puesta en marcha completa](#puesta-en-marcha-completa).
 
 ## 10. Modelo de negocio
 
@@ -387,39 +375,258 @@ La aplicación debe proporcionar las herramientas necesarias para que cada perso
 
 **OwnTempo — Tu vida, a tu ritmo.**
 
-## Desarrollo local con Docker
+## Puesta en marcha completa
 
 ### Requisitos
 
 - Docker Engine.
 - Docker Compose v2 (`docker compose`).
+- Espacio libre para las imágenes, PostgreSQL y, si se activa la IA, el modelo.
+- Para los informes, memoria suficiente para ejecutar un modelo local de 3B. El
+  modelo configurado ocupa aproximadamente 1,9 GB en disco.
 
-### Puesta en marcha
+Todos los comandos siguientes se ejecutan desde la raíz del repositorio:
 
-1. Copia `.env.example` a `.env` y ajusta las variables si lo necesitas.
-2. Construye y levanta PostgreSQL, la API y la PWA:
+```bash
+cd /ruta/al/proyecto/OwnTempo
+```
 
-   ```bash
-   docker compose up --build
-   ```
+### 1. Configurar las variables de entorno
 
-3. Abre la PWA en `http://localhost:8080`.
-4. Comprueba la API a través del mismo origen en
-   `http://localhost:8080/api/v1/health/`. El backend también queda accesible
-   directamente en `http://localhost:8000` para desarrollo.
+Crea el archivo local de configuración la primera vez:
 
-El contenedor del backend espera a PostgreSQL, aplica las migraciones, recopila
-los archivos estáticos e inicia Gunicorn. Para ejecutar las pruebas:
+```bash
+cp .env.example .env
+```
+
+Para un entorno doméstico o de producción, cambia al menos
+`DJANGO_SECRET_KEY` y las credenciales de PostgreSQL. Las variables relacionadas
+con los informes deben quedar así:
+
+```env
+LOCAL_LLM_ENABLED=true
+LOCAL_LLM_BASE_URL=http://ollama:11434
+LOCAL_LLM_MODEL=qwen2.5:3b-instruct
+LOCAL_LLM_TIMEOUT_SECONDS=180
+```
+
+El valor de `LOCAL_LLM_MODEL` debe coincidir exactamente con el modelo descargado
+en Ollama.
+
+### 2. Elegir el tipo de arranque
+
+Para utilizar toda la aplicación, incluidos los informes mensuales, construye y
+levanta los servicios con el perfil `ai`:
+
+```bash
+docker compose --profile ai up -d --build
+```
+
+Se iniciarán:
+
+- `db`: PostgreSQL.
+- `backend`: API Django, migraciones y archivos estáticos.
+- `frontend`: PWA servida por Nginx.
+- `ollama`: servidor local del modelo.
+- `report-worker`: procesador asíncrono de informes.
+
+Si no quieres utilizar los informes con IA, puedes arrancar únicamente la
+aplicación principal:
+
+```bash
+docker compose up -d --build
+```
+
+### 3. Descargar el modelo local
+
+Este paso solo es necesario la primera vez, o cuando cambie
+`LOCAL_LLM_MODEL`:
+
+```bash
+docker compose --profile ai exec ollama ollama pull qwen2.5:3b-instruct
+```
+
+La descarga necesita conexión a Internet. Una vez instalado, los análisis se
+realizan localmente y el volumen `ollama_data` conserva el modelo entre
+reinicios.
+
+Comprueba que está disponible:
+
+```bash
+docker compose --profile ai exec ollama ollama list
+```
+
+### 4. Comprobar el estado de los servicios
+
+```bash
+docker compose --profile ai ps
+```
+
+Los servicios deben aparecer como `running` o `healthy`. También puedes abrir el
+health check en `http://localhost:8080/api/v1/health/`.
+
+Si algún servicio falla, consulta sus logs:
+
+```bash
+docker compose --profile ai logs --tail=100 backend frontend
+docker compose --profile ai logs --tail=100 report-worker ollama
+```
+
+### 5. Crear el primer administrador
+
+OwnTempo no ofrece registro público. En una base de datos nueva crea el
+administrador inicial con los servicios levantados:
+
+```bash
+docker compose exec backend python manage.py createsuperuser
+```
+
+Abre `http://localhost:8080/admin/`, inicia sesión con ese administrador y crea
+los usuarios que utilizarán la aplicación. Cada usuario obtiene automáticamente
+su espacio personal y podrá entrar en la PWA desde `http://localhost:8080`.
+
+### 6. Activar y preparar Entrenamiento
+
+Después de entrar en la PWA:
+
+1. Abre el menú del perfil.
+2. Entra en **Configurar módulos**.
+3. Selecciona el espacio personal.
+4. Activa **Entrenamiento**.
+5. Abre el módulo y completa la estatura y la fecha de nacimiento.
+
+El módulo de entrenamiento y sus informes solo funcionan en el espacio personal
+del propietario; no aparecen en espacios compartidos.
+
+### 7. Registrar datos del mes
+
+El informe utiliza los datos guardados en el módulo:
+
+- sesiones de fuerza, ejercicios, series, peso, repeticiones y duración;
+- pasos diarios y objetivo de pasos;
+- peso, IMC y mediciones de composición corporal;
+- estatura, edad calculada y objetivo escrito al generar el informe.
+
+Es posible generar un informe con pocos datos, pero indicará que la información
+es insuficiente. Para obtener tendencias de salud conviene registrar al menos dos
+mediciones durante el mes, idealmente una por semana.
+
+### 8. Generar el primer informe
+
+Dentro del espacio personal, abre:
+
+```text
+Entrenamiento → Informes
+```
+
+Después:
+
+1. Selecciona el mes actual o uno anterior. No se permiten meses futuros.
+2. Escribe el objetivo que tenías para ese periodo.
+3. Pulsa **Generar informe**.
+4. Espera mientras el estado muestra **En cola** o **Analizando**.
+
+La petición web no queda bloqueada: `report-worker` recoge el trabajo desde
+PostgreSQL y la página consulta su estado automáticamente. Cuando termina se
+muestran el resumen, las puntuaciones, los puntos fuertes, los ajustes y las
+acciones propuestas para el siguiente mes.
+
+Si corriges datos o cambias el objetivo, usa **Regenerar informe**.
+
+### 9. Arranques posteriores
+
+El modelo y la base de datos se conservan en volúmenes. En los siguientes
+arranques solo necesitas ejecutar:
+
+```bash
+docker compose --profile ai up -d
+```
+
+Abre la aplicación en `http://localhost:8080`. El backend aplica automáticamente
+las migraciones pendientes antes de iniciar Gunicorn.
+
+### 10. Diagnóstico de informes
+
+Si un informe termina con error, comprueba primero el modelo:
+
+```bash
+docker compose --profile ai exec ollama ollama list
+```
+
+Después revisa el worker y Ollama:
+
+```bash
+docker compose --profile ai logs --tail=100 report-worker ollama
+```
+
+Problemas habituales:
+
+- **El modelo no aparece en `ollama list`:** ejecuta de nuevo `ollama pull`.
+- **El nombre del modelo no coincide:** revisa `LOCAL_LLM_MODEL` en `.env` y
+  reinicia los servicios.
+- **`report-worker` no está iniciado:** asegúrate de usar `--profile ai`.
+- **El informe quedó fallido antes de descargar el modelo:** vuelve a la pestaña
+  **Informes** y pulsa **Regenerar informe**.
+- **La generación supera el tiempo máximo:** aumenta
+  `LOCAL_LLM_TIMEOUT_SECONDS` y reinicia el worker.
+
+Para aplicar cambios en `.env` o reconstruir imágenes:
+
+```bash
+docker compose --profile ai up -d --build --force-recreate
+```
+
+### 11. Pruebas
+
+Para ejecutar la suite completa del backend:
 
 ```bash
 docker compose run --rm backend python manage.py test
 ```
 
-Para detener los servicios sin eliminar los datos de PostgreSQL:
+Para comprobar el frontend:
 
 ```bash
-docker compose down
+cd frontend
+npm install
+npm run typecheck
+npm run lint
+npm run build
 ```
+
+### 12. Detener la aplicación
+
+Para detener y retirar los contenedores sin borrar PostgreSQL ni el modelo:
+
+```bash
+docker compose --profile ai down
+```
+
+No utilices `docker compose down -v` salvo que quieras eliminar definitivamente
+la base de datos y los modelos descargados.
+
+### Resumen rápido del primer arranque
+
+```bash
+cp .env.example .env
+docker compose --profile ai up -d --build
+docker compose --profile ai exec ollama ollama pull qwen2.5:3b-instruct
+docker compose exec backend python manage.py createsuperuser
+docker compose --profile ai ps
+```
+
+Después abre `http://localhost:8080`, activa Entrenamiento en el espacio personal,
+registra datos y genera el informe desde la pestaña **Informes**.
+
+## Operación habitual con Docker
+
+El contenedor del backend espera a PostgreSQL, aplica las migraciones, recopila
+los archivos estáticos e inicia Gunicorn. La PWA utiliza el mismo origen y Nginx
+redirige `/api/` al backend.
+
+Los datos de PostgreSQL se almacenan en `postgres_data` y los modelos locales en
+`ollama_data`. Configura copias de seguridad antes de introducir información
+real de salud o entrenamiento.
 
 ## Desarrollo local de la PWA
 
@@ -437,18 +644,12 @@ La pantalla inicial consulta automáticamente `GET /api/v1/health/`. En desarrol
 de producción se usa el mismo origen y Nginx redirige `/api/` al servicio Django.
 Consulta `frontend/README.md` para las instrucciones completas.
 
-### Primer administrador y usuarios
+### Administración de usuarios
 
-OwnTempo no ofrece registro público. Después de preparar una base de datos nueva,
-crea el administrador inicial:
-
-```bash
-docker compose run --rm backend python manage.py createsuperuser
-```
-
-Con los servicios iniciados, abre `http://localhost:8080/admin/` para crear,
-desactivar o cambiar la contraseña de los usuarios domésticos. Estos usuarios
-podrán iniciar sesión en la PWA y editar su username, nombre y apellidos.
+La creación inicial del administrador y de los usuarios está incluida en la
+[guía de puesta en marcha](#5-crear-el-primer-administrador). Desde
+`http://localhost:8080/admin/` se pueden crear, desactivar o cambiar las
+contraseñas de los usuarios domésticos.
 
 La introducción de `AUTH_USER_MODEL` requiere una base de datos nueva. Si el
 volumen de desarrollo anterior ya tenía migraciones aplicadas, respalda primero
