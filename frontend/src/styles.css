@@ -327,6 +327,63 @@
 .training-health-history li { min-height: 44px; display: grid; grid-template-columns: 90px repeat(3, minmax(0, 1fr)); align-items: center; gap: 0.5rem; border-top: 1px solid #edf2f0; font-size: 0.7rem; }
 .training-health-history time { color: #60736e; }
 .training-health-history li span { font-variant-numeric: tabular-nums; }
+.training-report-loading { min-height: 280px; display: grid; place-items: center; align-content: center; gap: 0.75rem; color: #60736e; }
+.training-reports-heading { padding: 1.25rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; border-radius: 17px; color: #fff; background: #174f45; box-shadow: 0 12px 26px rgb(23 79 69 / 16%); }
+.training-reports-heading h2, .training-reports-heading p { margin: 0; }
+.training-reports-heading h2 { font-size: 1.25rem; letter-spacing: -0.03em; }
+.training-reports-heading p { max-width: 55ch; margin-top: 0.4rem; color: #cde0da; font-size: 0.78rem; line-height: 1.5; }
+.training-reports-heading > span { flex: 0 0 auto; padding: 0.4rem 0.65rem; border-radius: 999px; color: #dcece7; background: rgb(255 255 255 / 10%); font-size: 0.68rem; font-weight: 800; }
+.training-report-controls { margin-top: 0.8rem; padding: 1rem; display: grid; grid-template-columns: minmax(150px, 0.45fr) minmax(0, 1.55fr) auto; align-items: end; gap: 0.75rem; border: 1px solid #d7e4df; border-radius: 15px; background: #fff; }
+.training-report-controls label { display: grid; gap: 0.35rem; color: #46635c; font-size: 0.72rem; font-weight: 850; }
+.training-report-controls input, .training-report-controls textarea { width: 100%; min-height: 44px; padding: 0.6rem 0.7rem; border: 1px solid #cbdad5; border-radius: 10px; color: #18302b; background: #fff; resize: vertical; }
+.training-report-controls .training-add-workout { min-height: 44px; justify-content: center; }
+.training-report-controls button:disabled { opacity: 0.55; cursor: wait; }
+.training-report-empty { min-height: 260px; display: grid; place-items: center; align-content: center; gap: 0.45rem; text-align: center; }
+.training-report-empty > div { width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid #b9d1ca; border-radius: 14px; color: #1f6b5c; background: #e9f2ef; font-size: 1.2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.training-report-empty h3, .training-report-empty p { margin: 0; }
+.training-report-empty h3 { margin-top: 0.35rem; font-size: 1rem; }
+.training-report-empty p { max-width: 50ch; color: #60736e; font-size: 0.78rem; line-height: 1.5; }
+.training-report-progress, .training-report-failed { margin-top: 0.8rem; padding: 1rem; display: flex; align-items: center; gap: 0.8rem; border-radius: 14px; }
+.training-report-progress { color: #234d43; background: #e9f2ef; }
+.training-report-failed { justify-content: space-between; color: #783b35; background: #fbeeed; }
+.training-report-progress strong, .training-report-progress p, .training-report-failed strong, .training-report-failed p { margin: 0; }
+.training-report-progress p, .training-report-failed p { margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.45; }
+.training-report-failed .secondary-button { min-height: 40px; margin: 0; }
+.training-report-result { margin-top: 0.8rem; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 10px 28px rgb(28 70 60 / 10%); }
+.training-report-result > header { padding: 1.2rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; color: #fff; background: #174f45; }
+.training-report-result > header h3, .training-report-result > header p { margin: 0; }
+.training-report-result > header h3 { max-width: 28ch; margin-top: 0.55rem; font-size: clamp(1.25rem, 4vw, 1.65rem); line-height: 1.15; letter-spacing: -0.035em; }
+.training-report-result > header p { max-width: 65ch; margin-top: 0.55rem; color: #d2e4df; font-size: 0.8rem; line-height: 1.55; }
+.training-report-result > header button { border: 0; color: #d2e4df; background: transparent; font-size: 0.7rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.training-report-status { display: inline-flex; padding: 0.35rem 0.55rem; border-radius: 999px; font-size: 0.66rem; font-weight: 850; }
+.training-report-status--on_track { color: #173a33; background: #bfe1d7; }
+.training-report-status--needs_attention { color: #563809; background: #f4c77d; }
+.training-report-status--insufficient_data { color: #334b45; background: #d9e4e1; }
+.training-report-scores { margin: 0; padding: 1rem 1.2rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 1px solid #e2ebe8; }
+.training-report-scores div { padding-inline: 0.8rem; border-right: 1px solid #e2ebe8; }
+.training-report-scores div:first-child { padding-left: 0; }
+.training-report-scores div:last-child { padding-right: 0; border-right: 0; }
+.training-report-scores dt { color: #60736e; font-size: 0.68rem; font-weight: 800; }
+.training-report-scores dd { margin: 0.2rem 0 0; color: #18302b; font-size: 1.35rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.training-report-scores dd span { margin-left: 0.12rem; color: #758983; font-size: 0.68rem; }
+.training-report-sections { padding: 1.2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.training-report-sections section { min-width: 0; }
+.training-report-sections h4, .training-report-sections ul, .training-report-sections ol { margin: 0; }
+.training-report-sections h4 { font-size: 0.86rem; }
+.training-report-sections ul, .training-report-sections ol { margin-top: 0.7rem; padding-left: 1.1rem; color: #46635c; font-size: 0.76rem; line-height: 1.55; }
+.training-report-sections li + li { margin-top: 0.45rem; }
+.training-report-actions { grid-column: 1 / -1; padding-top: 1rem; border-top: 1px solid #e2ebe8; }
+.training-report-actions ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; padding-left: 1.8rem; }
+.training-report-actions li { padding: 0.8rem 0.8rem 0.8rem 0.25rem; color: #18302b; }
+.training-report-actions li::marker { color: #8b5b17; font-weight: 900; }
+.training-report-result > aside { margin: 0 1.2rem 1.2rem; padding: 0.8rem; border-radius: 12px; color: #5b5344; background: #f6f2e9; font-size: 0.72rem; line-height: 1.5; }
+.training-report-result > aside ul { margin: 0.35rem 0 0; padding-left: 1rem; }
+.training-report-result > footer { padding: 0.75rem 1.2rem; display: flex; justify-content: space-between; gap: 1rem; color: #60736e; background: #f5f8f7; font-size: 0.65rem; }
+.training-report-disclaimer { margin: 0.75rem 0 0; color: #60736e; font-size: 0.68rem; text-align: center; }
+.training-report-history { margin-top: 1.25rem; display: flex; align-items: center; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; }
+.training-report-history > span { flex: 0 0 auto; color: #60736e; font-size: 0.7rem; font-weight: 800; }
+.training-report-history button { min-height: 42px; padding: 0.45rem 0.7rem; flex: 0 0 auto; border: 1px solid #d7e4df; border-radius: 10px; color: #18302b; background: #fff; font-size: 0.7rem; text-align: left; }
+.training-report-history small { margin-top: 0.1rem; display: block; color: #60736e; font-size: 0.62rem; }
 
 @media (max-width: 700px) {
   .training-profile-setup { grid-template-columns: 1fr; align-items: stretch; }
@@ -342,6 +399,13 @@
   .training-health-metrics button:nth-child(n+9) { border-bottom: 0; }
   .training-health-history li { grid-template-columns: 90px 1fr; padding-block: 0.6rem; }
   .training-health-history li span:nth-of-type(n+2) { grid-column: 2; }
+  .training-report-controls { grid-template-columns: 1fr; align-items: stretch; }
+  .training-report-scores { grid-template-columns: repeat(2, 1fr); row-gap: 1rem; }
+  .training-report-scores div:nth-child(2) { border-right: 0; }
+  .training-report-scores div:nth-child(3) { padding-left: 0; }
+  .training-report-sections { grid-template-columns: 1fr; }
+  .training-report-actions { grid-column: auto; }
+  .training-report-actions ol { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
@@ -355,6 +419,10 @@
   .training-health-form > div:not(.training-form-actions) { grid-template-columns: 1fr; }
   .training-health-chart > header { flex-direction: column; }
   .training-health-chart label, .training-health-chart select { width: 100%; }
+  .training-tabs { gap: 1rem; overflow-x: auto; }
+  .training-tabs button { flex: 0 0 auto; }
+  .training-reports-heading { align-items: flex-start; flex-direction: column; }
+  .training-report-result > footer { flex-direction: column; gap: 0.25rem; }
 }
 
 @media (min-width: 700px) {
@@ -363,7 +431,7 @@
 
 @media (hover: hover) {
   .training-back:hover, .training-workout-form > header button:hover { background: #e9f2ef; }
-  .training-quick-actions button:hover, .training-profile-button:hover { border-color: #7da99d; }
+  .training-quick-actions button:hover, .training-profile-button:hover, .training-report-history button:hover { border-color: #7da99d; }
 }
 
 @media (hover: hover) {

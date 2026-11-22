@@ -24,6 +24,7 @@ import {
 } from '../api/training';
 import { spaceErrorMessage } from '../hooks/use-spaces';
 import { Icon } from './icon';
+import { MonthlyReportsPanel } from './monthly-reports-panel';
 
 type TrainingWorkspaceProps = {
   onBack: () => void;
@@ -31,7 +32,7 @@ type TrainingWorkspaceProps = {
   space: Space;
 };
 
-type Tab = 'summary' | 'strength' | 'evolution';
+type Tab = 'summary' | 'strength' | 'evolution' | 'reports';
 type HealthMetricKey = Exclude<keyof HealthMeasurement, 'id' | 'date' | 'notes'>;
 type DraftSet = { weight: string; repetitions: string };
 type DraftExercise = { name: string; sets: DraftSet[] };
@@ -283,9 +284,9 @@ export function TrainingWorkspace({ onBack, onModuleUnavailable, space }: Traini
       ) : null}
 
       <div className="training-tabs" role="tablist" aria-label="Secciones de entrenamiento">
-        {(['summary', 'strength', 'evolution'] as Tab[]).map((item) => (
+        {(['summary', 'strength', 'evolution', 'reports'] as Tab[]).map((item) => (
           <button aria-selected={tab === item} key={item} onClick={() => setTab(item)} role="tab" type="button">
-            {item === 'summary' ? 'Resumen' : item === 'strength' ? 'Fuerza' : 'Salud'}
+            {item === 'summary' ? 'Resumen' : item === 'strength' ? 'Fuerza' : item === 'evolution' ? 'Salud' : 'Informes'}
           </button>
         ))}
       </div>
@@ -326,6 +327,8 @@ export function TrainingWorkspace({ onBack, onModuleUnavailable, space }: Traini
           <div className="training-overview-grid"><section className="training-health-history"><header><h3>Mediciones recientes</h3><span>{healthMeasurements.length} registros</span></header>{healthMeasurements.length ? <ol>{healthMeasurements.slice(0, 5).map((entry) => <li key={entry.id}><time>{formatDate(entry.date)}</time><span>{number(entry.weight_kg).toFixed(1)} kg</span><span>{entry.body_fat_percentage == null ? '—' : `${number(entry.body_fat_percentage).toFixed(1)}% grasa`}</span><span>{entry.muscle_mass_kg == null ? '—' : `${number(entry.muscle_mass_kg).toFixed(1)} kg músculo`}</span></li>)}</ol> : <p className="training-empty-copy">Todavía no hay mediciones de salud.</p>}</section><section className="training-profile-card"><header><h3>Datos personales</h3><Icon name="settings" /></header><form onSubmit={(event) => void saveProfile(event)}><label>Estatura en cm<input max="250" min="80" onChange={(event) => setProfileHeight(event.target.value)} required type="number" value={profileHeight} /></label><label>Fecha de nacimiento<input max={today()} onChange={(event) => setProfileBirthDate(event.target.value)} required type="date" value={profileBirthDate} /></label><button className="secondary-button" disabled={busy} type="submit">Actualizar perfil</button></form></section></div>
         </div>
       ) : null}
+
+      {tab === 'reports' ? <MonthlyReportsPanel spaceId={space.id} /> : null}
     </section>
   );
 }

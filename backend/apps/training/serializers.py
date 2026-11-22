@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from django.utils import timezone
 
-from .models import DailySteps, HealthMeasurement, StrengthExercise, StrengthSet, StrengthWorkout, TrainingProfile
+from .models import (
+    DailySteps,
+    HealthMeasurement,
+    MonthlyTrainingReport,
+    StrengthExercise,
+    StrengthSet,
+    StrengthWorkout,
+    TrainingProfile,
+)
 from .services import create_workout, update_workout
 
 
@@ -141,3 +149,60 @@ class HealthMeasurementSerializer(serializers.ModelSerializer):
         if queryset.exists():
             raise serializers.ValidationError({"date": "Ya existe una medición de salud para este día."})
         return attrs
+
+
+class MonthlyReportScoresSerializer(serializers.Serializer):
+    training = serializers.IntegerField(min_value=0, max_value=10)
+    activity = serializers.IntegerField(min_value=0, max_value=10)
+    health_tracking = serializers.IntegerField(min_value=0, max_value=10)
+    consistency = serializers.IntegerField(min_value=0, max_value=10)
+
+
+class MonthlyReportResultSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=160)
+    summary = serializers.CharField(max_length=1200)
+    overall_status = serializers.ChoiceField(
+        choices=("on_track", "needs_attention", "insufficient_data")
+    )
+    scores = MonthlyReportScoresSerializer()
+    highlights = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    improvements = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    next_month_actions = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    cautions = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+
+
+class MonthlyTrainingReportSerializer(serializers.ModelSerializer):
+    month = serializers.DateField(format="%Y-%m")
+
+    class Meta:
+        model = MonthlyTrainingReport
+        fields = (
+            "id",
+            "month",
+            "goal",
+            "status",
+            "result_payload",
+            "model_name",
+            "prompt_version",
+            "error_message",
+            "created_at",
+            "updated_at",
+            "completed_at",
+        )
+        read_only_fields = fields
+
+
+class MonthlyTrainingReportCreateSerializer(serializers.Serializer):
+    month = serializers.RegexField(
+        regex=r"^\d{4}-(0[1-9]|1[0-2])$",
+        error_messages={"invalid": "El mes debe usar el formato AAAA-MM."},
+    )
+    goal = serializers.CharField(max_length=1000, allow_blank=True, required=False)

@@ -9,6 +9,9 @@ from .views import (
     HealthListCreateView,
     WorkoutDetailView,
     WorkoutListCreateView,
+    MonthlyReportDetailView,
+    MonthlyReportListCreateView,
+    MonthlyReportRegenerateView,
 )
 
 app_name = "training"
@@ -22,4 +25,19 @@ urlpatterns = [
     path("spaces/<int:space_id>/training/health/", HealthListCreateView.as_view(), name="health-list"),
     path("spaces/<int:space_id>/training/health/<int:measurement_id>/", HealthDetailView.as_view(), name="health-detail"),
     path("spaces/<int:space_id>/training/summary/", TrainingSummaryView.as_view(), name="summary"),
+    path(
+        "spaces/<int:space_id>/training/monthly-reports/",
+        MonthlyReportListCreateView.as_view(),
+        name="monthly-report-list",
+    ),
+    path(
+        "spaces/<int:space_id>/training/monthly-reports/<int:report_id>/",
+        MonthlyReportDetailView.as_view(),
+        name="monthly-report-detail",
+    ),
+    path(
+        "spaces/<int:space_id>/training/monthly-reports/<int:report_id>/regenerate/",
+        MonthlyReportRegenerateView.as_view(),
+        name="monthly-report-regenerate",
+    ),
 ]

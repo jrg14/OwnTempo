@@ -5,6 +5,9 @@
 Implementado. El comportamiento real y el mockup de referencia están
 documentados en [`../features/training.md`](../features/training.md).
 
+La ampliación de informes mensuales se documenta en
+[`monthly-training-health-reports.md`](monthly-training-health-reports.md).
+
 ## Objetivo
 
 Crear un módulo personal para registrar y consultar:

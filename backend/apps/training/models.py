@@ -199,3 +199,48 @@ class HealthMeasurement(PersonalTrainingRecord):
                 name="training_health_date_idx",
             )
         ]
+
+
+class MonthlyTrainingReport(PersonalTrainingRecord):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        PROCESSING = "processing", "Procesando"
+        COMPLETED = "completed", "Completado"
+        FAILED = "failed", "Fallido"
+
+    month = models.DateField(help_text="Primer día del mes analizado.")
+    goal = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    input_payload = models.JSONField(default=dict, blank=True)
+    result_payload = models.JSONField(default=dict, blank=True)
+    model_name = models.CharField(max_length=120, blank=True)
+    prompt_version = models.CharField(max_length=24, default="1.0")
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-month", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("space", "user", "month"),
+                name="unique_monthly_training_report",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("space", "user", "month"),
+                name="training_report_month_idx",
+            ),
+            models.Index(fields=("status", "created_at"), name="training_report_queue_idx"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.month and self.month.day != 1:
+            raise ValidationError({"month": "El mes debe guardarse usando su primer día."})

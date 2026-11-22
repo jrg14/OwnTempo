@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -10,7 +11,16 @@ from apps.modules.models import SpaceModule
 from apps.spaces.models import Space
 from apps.spaces.services import create_shared_space
 
-from .models import DailySteps, HealthMeasurement, StrengthWorkout, TrainingProfile
+from .models import (
+    DailySteps,
+    HealthMeasurement,
+    MonthlyTrainingReport,
+    StrengthExercise,
+    StrengthSet,
+    StrengthWorkout,
+    TrainingProfile,
+)
+from .monthly_reports import build_monthly_context, claim_pending_report, generate_monthly_report
 
 
 def health_payload(measured_on):
@@ -140,3 +150,127 @@ class TrainingApiTests(APITestCase):
         self.assertEqual(response.data["health"]["weight_change_from_first_kg"], Decimal("-0.50"))
         self.assertEqual(response.data["health"]["latest"]["metabolic_age"], 34)
         self.assertEqual(len(response.data["health_history"]), 2)
+
+
+class MonthlyTrainingReportTests(APITestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(username="informe", password="secret")
+        self.other = user_model.objects.create_user(username="intruso", password="secret")
+        self.space = Space.objects.get(created_by=self.user, kind=Space.Kind.PERSONAL)
+        self.client.force_authenticate(self.user)
+        self.month = date.today().replace(day=1)
+
+    def create_month_data(self):
+        TrainingProfile.objects.create(
+            space=self.space,
+            user=self.user,
+            height_cm=170,
+            date_of_birth=date(1990, 5, 10),
+        )
+        DailySteps.objects.create(
+            space=self.space,
+            user=self.user,
+            date=date.today(),
+            steps=9000,
+            goal=8000,
+        )
+        measurement = health_payload(date.today())
+        HealthMeasurement.objects.create(space=self.space, user=self.user, **measurement)
+        workout = StrengthWorkout.objects.create(
+            space=self.space,
+            user=self.user,
+            workout_date=date.today(),
+            duration_minutes=50,
+        )
+        exercise = StrengthExercise.objects.create(workout=workout, name="Sentadilla", order=1)
+        StrengthSet.objects.create(
+            exercise=exercise,
+            set_number=1,
+            weight_kg="80.00",
+            repetitions=10,
+        )
+
+    def test_context_uses_backend_calculations_and_goal(self):
+        self.create_month_data()
+
+        context = build_monthly_context(
+            self.space,
+            self.user,
+            self.month,
+            "Entrenar con constancia",
+        )
+
+        self.assertEqual(context["training"]["workout_count"], 1)
+        self.assertEqual(context["training"]["total_volume_kg"], 800.0)
+        self.assertEqual(context["steps"]["goal_completion_rate"], 1.0)
+        self.assertEqual(context["health"]["measurements_count"], 1)
+        self.assertEqual(context["goals"]["monthly_goal"], "Entrenar con constancia")
+        self.assertIn("comparison_previous_month", context)
+
+    def test_report_can_be_queued_listed_and_deleted(self):
+        url = reverse("training:monthly-report-list", args=(self.space.id,))
+        response = self.client.post(
+            url,
+            {"month": self.month.strftime("%Y-%m"), "goal": "Mejorar fuerza"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data["status"], "pending")
+        self.assertEqual(response.data["month"], self.month.strftime("%Y-%m"))
+
+        listed = self.client.get(url)
+        self.assertEqual(listed.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(listed.data), 1)
+
+        detail_url = reverse(
+            "training:monthly-report-detail",
+            args=(self.space.id, response.data["id"]),
+        )
+        self.assertEqual(self.client.delete(detail_url).status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_other_user_cannot_read_report(self):
+        report = MonthlyTrainingReport.objects.create(
+            space=self.space,
+            user=self.user,
+            month=self.month,
+        )
+        self.client.force_authenticate(self.other)
+        response = self.client.get(
+            reverse("training:monthly-report-detail", args=(self.space.id, report.id))
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch("apps.training.monthly_reports.request_local_analysis")
+    def test_worker_validates_and_persists_local_analysis(self, request_analysis):
+        self.create_month_data()
+        request_analysis.return_value = {
+            "title": "Un mes constante",
+            "summary": "Has entrenado y registrado actividad durante el mes.",
+            "overall_status": "on_track",
+            "scores": {
+                "training": 7,
+                "activity": 8,
+                "health_tracking": 5,
+                "consistency": 7,
+            },
+            "highlights": ["Cumpliste el objetivo de pasos registrado."],
+            "improvements": ["Añade más mediciones para observar tendencias."],
+            "next_month_actions": ["Mantén una frecuencia semanal estable."],
+            "cautions": ["La tendencia de salud se basa en pocos datos."],
+        }
+        report = MonthlyTrainingReport.objects.create(
+            space=self.space,
+            user=self.user,
+            month=self.month,
+            goal="Ganar constancia",
+        )
+
+        report_id = claim_pending_report()
+        self.assertEqual(report_id, report.id)
+        generated = generate_monthly_report(report_id)
+
+        self.assertEqual(generated.status, MonthlyTrainingReport.Status.COMPLETED)
+        self.assertEqual(generated.result_payload["title"], "Un mes constante")
+        self.assertEqual(generated.input_payload["goals"]["monthly_goal"], "Ganar constancia")
+        self.assertTrue(generated.completed_at)

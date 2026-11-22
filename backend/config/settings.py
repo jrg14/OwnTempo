@@ -146,3 +146,12 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
+LOCAL_LLM_ENABLED = os.getenv("LOCAL_LLM_ENABLED", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL", "http://ollama:11434").rstrip("/")
+LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "qwen2.5:3b-instruct")
+LOCAL_LLM_TIMEOUT_SECONDS = int(os.getenv("LOCAL_LLM_TIMEOUT_SECONDS", "180"))
+

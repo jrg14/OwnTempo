@@ -36,6 +36,8 @@ El módulo solo aparece en espacios personales. Permite:
 - Guardar peso, repeticiones, duración y notas de una sesión.
 - Consultar resumen diario, métricas semanales y una gráfica histórica para cada
   parámetro de salud.
+- Generar informes mensuales privados con agregados de fuerza, pasos y salud,
+  comparación con el mes anterior y análisis de una IA local mediante Ollama.
 
 La PWA ofrece las pestañas **Resumen**, **Fuerza** y **Salud**, formularios
 adaptados a móvil, estados vacíos y mensajes accesibles de error y confirmación.
@@ -57,7 +59,17 @@ GET/POST         /api/v1/spaces/{space_id}/training/health/
 GET/PATCH/DELETE /api/v1/spaces/{space_id}/training/health/{id}/
 
 GET /api/v1/spaces/{space_id}/training/summary/
+
+GET/POST /api/v1/spaces/{space_id}/training/monthly-reports/
+GET/DELETE /api/v1/spaces/{space_id}/training/monthly-reports/{id}/
+POST /api/v1/spaces/{space_id}/training/monthly-reports/{id}/regenerate/
 ```
+
+La generación mensual es asíncrona: la API devuelve `202 Accepted` y el worker
+`process_monthly_reports` procesa la cola en PostgreSQL. La IA se activa con el
+perfil Docker `ai`; los cálculos numéricos pertenecen al backend y Ollama solo
+redacta la interpretación estructurada. Las funciones cloud de Ollama están
+deshabilitadas y su API no se publica fuera de la red interna de Docker.
 
 Los listados históricos admiten los parámetros `from` y `to` en formato
 `AAAA-MM-DD`.

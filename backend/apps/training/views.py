@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import transaction
 from django.db.models import Avg, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -8,15 +9,24 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.views import APIView
 
 from apps.modules.permissions import HasActiveModule
 from apps.spaces.models import Space
 from apps.spaces.permissions import IsSpaceMember
 
-from .models import DailySteps, HealthMeasurement, StrengthWorkout, TrainingProfile
+from .models import DailySteps, HealthMeasurement, MonthlyTrainingReport, StrengthWorkout, TrainingProfile
+from .monthly_reports import PROMPT_VERSION, normalize_month
 from .permissions import IsPersonalTrainingSpace
-from .serializers import DailyStepsSerializer, HealthMeasurementSerializer, StrengthWorkoutSerializer, TrainingProfileSerializer
+from .serializers import (
+    DailyStepsSerializer,
+    HealthMeasurementSerializer,
+    MonthlyTrainingReportCreateSerializer,
+    MonthlyTrainingReportSerializer,
+    StrengthWorkoutSerializer,
+    TrainingProfileSerializer,
+)
 
 
 class TrainingMixin:
@@ -202,4 +212,105 @@ class TrainingSummaryView(TrainingMixin, APIView):
                     health_measurements.filter(date__gte=history_start), many=True
                 ).data,
             }
+        )
+
+
+def _queue_report(report, goal=None):
+    if goal is not None:
+        report.goal = goal.strip()
+    report.status = MonthlyTrainingReport.Status.PENDING
+    report.input_payload = {}
+    report.result_payload = {}
+    report.model_name = ""
+    report.prompt_version = PROMPT_VERSION
+    report.error_message = ""
+    report.completed_at = None
+    report.save()
+    return report
+
+
+class MonthlyReportListCreateView(TrainingMixin, APIView):
+    def get(self, request, *args, **kwargs):
+        reports = MonthlyTrainingReport.objects.filter(
+            space=self.get_space(), user=request.user
+        )
+        return Response(MonthlyTrainingReportSerializer(reports, many=True).data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = MonthlyTrainingReportCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        month = normalize_month(serializer.validated_data["month"])
+        goal = serializer.validated_data.get("goal", "")
+
+        with transaction.atomic():
+            report = MonthlyTrainingReport.objects.select_for_update().filter(
+                space=self.get_space(), user=request.user, month=month
+            ).first()
+            if report and report.status == MonthlyTrainingReport.Status.PROCESSING:
+                return Response(
+                    {"detail": "El informe de este mes ya se está procesando."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            if report is None:
+                report = MonthlyTrainingReport(
+                    space=self.get_space(),
+                    user=request.user,
+                    month=month,
+                    goal=goal.strip(),
+                    prompt_version=PROMPT_VERSION,
+                )
+            _queue_report(report, goal)
+
+        return Response(
+            MonthlyTrainingReportSerializer(report).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class MonthlyReportDetailView(TrainingMixin, APIView):
+    def get_report(self):
+        return get_object_or_404(
+            MonthlyTrainingReport,
+            pk=self.kwargs["report_id"],
+            space=self.get_space(),
+            user=self.request.user,
+        )
+
+    def get(self, request, *args, **kwargs):
+        return Response(MonthlyTrainingReportSerializer(self.get_report()).data)
+
+    def delete(self, request, *args, **kwargs):
+        report = self.get_report()
+        if report.status == MonthlyTrainingReport.Status.PROCESSING:
+            return Response(
+                {"detail": "Espera a que termine la generación antes de eliminar el informe."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        report.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MonthlyReportRegenerateView(MonthlyReportDetailView):
+    http_method_names = ("post", "head", "options")
+
+    def post(self, request, *args, **kwargs):
+        goal = request.data.get("goal")
+        if goal is not None and not isinstance(goal, str):
+            raise ValidationError({"goal": "El objetivo debe ser texto."})
+        if isinstance(goal, str) and len(goal) > 1000:
+            raise ValidationError({"goal": "El objetivo no puede superar 1000 caracteres."})
+
+        with transaction.atomic():
+            report = MonthlyTrainingReport.objects.select_for_update().get(
+                pk=self.get_report().pk
+            )
+            if report.status == MonthlyTrainingReport.Status.PROCESSING:
+                return Response(
+                    {"detail": "El informe ya se está procesando."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            _queue_report(report, goal)
+        return Response(
+            MonthlyTrainingReportSerializer(report).data,
+            status=status.HTTP_202_ACCEPTED,
         )

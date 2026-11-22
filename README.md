@@ -233,6 +233,36 @@ La arquitectura debe priorizar la mantenibilidad, seguridad, modularidad y contr
 
 Las decisiones tecnológicas podrán revisarse durante el desarrollo.
 
+### Informes mensuales con IA local
+
+El módulo de entrenamiento puede generar informes privados mediante Ollama. La
+IA se ejecuta únicamente al activar el perfil opcional `ai` de Docker Compose:
+
+```bash
+docker compose --profile ai up -d
+docker compose --profile ai exec ollama ollama pull qwen2.5:3b-instruct
+```
+
+Después de descargar el modelo, la pestaña **Informes** permite seleccionar un
+mes, indicar el objetivo del periodo y encolar el análisis. El servicio
+`report-worker` procesa las solicitudes sin bloquear la API. El modelo de 3B
+ocupa aproximadamente 1,9 GB; se puede cambiar con `LOCAL_LLM_MODEL`.
+
+Ollama se ejecuta con `OLLAMA_NO_CLOUD=1` y su puerto no se publica en el host.
+Solo el worker puede acceder a su API mediante la red privada de Docker. La
+descarga inicial obtiene el modelo desde el registro de Ollama, pero los JSON de
+salud y entrenamiento no se envían fuera del despliegue local.
+
+Para ejecutar la aplicación sin IA local se mantiene el arranque habitual, sin
+el perfil:
+
+```bash
+docker compose up -d
+```
+
+Los totales, promedios y comparaciones se calculan en Django. Ollama solo recibe
+un JSON agregado y devuelve la interpretación, que se valida antes de guardarse.
+
 ## 10. Modelo de negocio
 
 OwnTempo utilizará inicialmente un modelo **freemium**.

@@ -96,6 +96,36 @@ export type TrainingSummary = {
   health_history: HealthMeasurement[];
 };
 
+export type MonthlyReportResult = {
+  title: string;
+  summary: string;
+  overall_status: 'on_track' | 'needs_attention' | 'insufficient_data';
+  scores: {
+    training: number;
+    activity: number;
+    health_tracking: number;
+    consistency: number;
+  };
+  highlights: string[];
+  improvements: string[];
+  next_month_actions: string[];
+  cautions: string[];
+};
+
+export type MonthlyTrainingReport = {
+  id: number;
+  month: string;
+  goal: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  result_payload: MonthlyReportResult | Record<string, never>;
+  model_name: string;
+  prompt_version: string;
+  error_message: string;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
 const root = (spaceId: number) => `/api/v1/spaces/${spaceId}/training`;
 
 export async function fetchTrainingProfile(spaceId: number) {
@@ -108,6 +138,22 @@ export async function saveTrainingProfile(spaceId: number, input: Pick<TrainingP
 
 export async function fetchTrainingSummary(spaceId: number) {
   return (await request(`${root(spaceId)}/summary/`)) as TrainingSummary;
+}
+
+export async function fetchMonthlyReports(spaceId: number) {
+  return (await request(`${root(spaceId)}/monthly-reports/`)) as MonthlyTrainingReport[];
+}
+
+export async function queueMonthlyReport(spaceId: number, month: string, goal: string) {
+  return (await mutate(`${root(spaceId)}/monthly-reports/`, 'POST', { month, goal })) as MonthlyTrainingReport;
+}
+
+export async function regenerateMonthlyReport(spaceId: number, reportId: number, goal: string) {
+  return (await mutate(`${root(spaceId)}/monthly-reports/${reportId}/regenerate/`, 'POST', { goal })) as MonthlyTrainingReport;
+}
+
+export async function deleteMonthlyReport(spaceId: number, reportId: number) {
+  await mutate(`${root(spaceId)}/monthly-reports/${reportId}/`, 'DELETE');
 }
 
 export async function fetchWorkouts(spaceId: number) {
