@@ -29,6 +29,7 @@ import { fetchSpaceModules } from '../api/modules';
 import { fetchMembers, type Space, type SpaceMember } from '../api/spaces';
 import { spaceErrorMessage } from '../hooks/use-spaces';
 import { Icon } from './icon';
+import { ExpenseReportsPanel } from './expense-reports-panel';
 
 type ExpensesWorkspaceProps = {
   currentUserId: number;
@@ -138,17 +139,18 @@ function PersonalPeriodSetup({ currentUserId, month, busy, onCreate }: {
   busy: boolean;
   onCreate: (participants: ParticipantInput[]) => Promise<void>;
 }) {
+  const [income, setIncome] = useState('0.00');
   const [startingSavings, setStartingSavings] = useState('0.00');
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onCreate([{
       user_id: currentUserId,
-      income: '0.00',
+      income,
       personal_starting_savings: startingSavings,
       custom_percentage: '100.00',
     }]);
   };
-  return <form className="expense-setup expense-setup--personal" onSubmit={(event) => void submit(event)}><header><h2>Configurar {new Date(`${month}-01T12:00:00`).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</h2><p>Indica con cuánto dinero quieres empezar a controlar tus gastos personales este mes.</p></header><label><span>Saldo personal inicial</span><input min="0" onChange={(event) => setStartingSavings(event.target.value)} required step="0.01" type="number" value={startingSavings} /></label><button className="primary-button" disabled={busy} type="submit">{busy ? 'Creando…' : 'Crear periodo personal'}</button></form>;
+  return <form className="expense-setup expense-setup--personal" onSubmit={(event) => void submit(event)}><header><h2>Configurar {new Date(`${month}-01T12:00:00`).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</h2><p>Indica tus ingresos del mes para calcular previsiones y el saldo que quieres controlar como gasto personal.</p></header><label><span>Ingreso mensual</span><input min="0" onChange={(event) => setIncome(event.target.value)} required step="0.01" type="number" value={income} /></label><label><span>Saldo inicial para gastos</span><input min="0" onChange={(event) => setStartingSavings(event.target.value)} required step="0.01" type="number" value={startingSavings} /></label><button className="primary-button" disabled={busy} type="submit">{busy ? 'Creando…' : 'Crear periodo personal'}</button></form>;
 }
 
 function PeriodConfiguration({ period, busy, onSave }: { period: ExpensePeriod; busy: boolean; onSave: (mode: ExpenseSplitMode, participants: ParticipantInput[]) => Promise<void> }) {
@@ -168,20 +170,22 @@ function PersonalBalanceForm({ busy, participant, period, onSave }: {
   period: ExpensePeriod;
   onSave: (participants: ParticipantInput[]) => Promise<void>;
 }) {
+  const [income, setIncome] = useState(participant.income);
   const [value, setValue] = useState(participant.personal_starting_savings);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onSave(period.participants.map((item) => ({
       user_id: item.user.id,
-      income: item.income,
+      income: item.id === participant.id ? income : item.income,
       personal_starting_savings: item.id === participant.id ? value : item.personal_starting_savings,
       custom_percentage: item.custom_percentage,
     })));
   };
-  return <form className="expense-personal-balance" onSubmit={(event) => void submit(event)}><label><span>Saldo inicial para gastos personales</span><input disabled={busy || period.status === 'closed'} min="0" onChange={(event) => setValue(event.target.value)} required step="0.01" type="number" value={value} /></label><p>Introduce manualmente cuánto dinero quieres usar. No depende del resultado de los gastos comunes.</p>{period.status === 'open' ? <button className="secondary-button" disabled={busy} type="submit">Guardar saldo</button> : null}</form>;
+  return <form className="expense-personal-balance" onSubmit={(event) => void submit(event)}><label><span>Ingreso mensual</span><input disabled={busy || period.status === 'closed'} min="0" onChange={(event) => setIncome(event.target.value)} required step="0.01" type="number" value={income} /></label><label><span>Saldo inicial para gastos personales</span><input disabled={busy || period.status === 'closed'} min="0" onChange={(event) => setValue(event.target.value)} required step="0.01" type="number" value={value} /></label><p>El ingreso se usa para las previsiones; el saldo inicial limita los gastos que puedes registrar este mes.</p>{period.status === 'open' ? <button className="secondary-button" disabled={busy} type="submit">Guardar datos</button> : null}</form>;
 }
 
 export function ExpensesWorkspace({ currentUserId, onBack, onModuleUnavailable, space }: ExpensesWorkspaceProps) {
+  const [view, setView] = useState<'month' | 'reports'>('month');
   const [month, setMonth] = useState(initialMonth);
   const [periods, setPeriods] = useState<ExpensePeriod[]>([]);
   const [members, setMembers] = useState<SpaceMember[]>([]);
@@ -263,12 +267,17 @@ export function ExpensesWorkspace({ currentUserId, onBack, onModuleUnavailable, 
       <header className="expenses-header">
         <button aria-label="Volver al inicio" className="expenses-back-button" onClick={onBack} type="button"><Icon name="arrow-left" /></button>
         <div className="expenses-header__copy"><h1 id="expenses-title">Gastos</h1><p>{space.name}</p></div>
-        <label className="expenses-period"><span>Periodo</span><input aria-label="Periodo" onChange={(event) => setMonth(event.target.value)} type="month" value={month} /></label>
+        {view === 'month' ? <label className="expenses-period"><span>Periodo</span><input aria-label="Periodo" onChange={(event) => setMonth(event.target.value)} type="month" value={month} /></label> : <span />}
       </header>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       <span className="sr-only" aria-live="polite">{announcement}</span>
 
-      {loading ? <div className="expense-loading" role="status"><span className="spinner" />Calculando el periodo…</div> : !period ? space.kind === 'personal' ? <PersonalPeriodSetup busy={busy} currentUserId={currentUserId} month={month} onCreate={(participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: 'equal', participant_inputs: participantInputs }); }, 'Periodo personal creado.')} /> : <PeriodSetup busy={busy} currentUserId={currentUserId} members={members} month={month} onCreate={(mode, participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: mode, participant_inputs: participantInputs }); }, 'Periodo creado.')} /> : space.kind === 'shared' ? (
+      <div className="expense-view-tabs" role="tablist" aria-label="Vistas de gastos">
+        <button aria-controls="expense-month-panel" aria-selected={view === 'month'} onClick={() => setView('month')} role="tab" type="button">Mes</button>
+        <button aria-controls="expense-reports-panel" aria-selected={view === 'reports'} onClick={() => setView('reports')} role="tab" type="button">Informes</button>
+      </div>
+
+      {view === 'reports' ? <ExpenseReportsPanel categories={categories} spaceId={space.id} spaceKind={space.kind} /> : <div id="expense-month-panel" role="tabpanel">{loading ? <div className="expense-loading" role="status"><span className="spinner" />Calculando el periodo…</div> : !period ? space.kind === 'personal' ? <PersonalPeriodSetup busy={busy} currentUserId={currentUserId} month={month} onCreate={(participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: 'equal', participant_inputs: participantInputs }); }, 'Periodo personal creado.')} /> : <PeriodSetup busy={busy} currentUserId={currentUserId} members={members} month={month} onCreate={(mode, participantInputs) => run(async () => { await createExpensePeriod(space.id, { year, month: monthNumber, split_mode: mode, participant_inputs: participantInputs }); }, 'Periodo creado.')} /> : space.kind === 'shared' ? (
         <>
           {summary ? (
             <section className="expense-common-overview" aria-labelledby="common-total-label">
@@ -351,13 +360,13 @@ export function ExpensesWorkspace({ currentUserId, onBack, onModuleUnavailable, 
           <details className="expense-management">
             <summary><span><Icon name="settings" />Gestionar gastos personales</span><Icon name="chevron" /></summary>
             <div className="expense-management__content">
-              {currentParticipant ? <PersonalBalanceForm busy={busy} key={`${currentParticipant.id}-${currentParticipant.personal_starting_savings}`} onSave={(participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { participant_inputs: participantInputs }); }, 'Saldo personal actualizado.')} participant={currentParticipant} period={period} /> : null}
+              {currentParticipant ? <PersonalBalanceForm busy={busy} key={`${currentParticipant.id}-${currentParticipant.income}-${currentParticipant.personal_starting_savings}`} onSave={(participantInputs) => run(async () => { await updateExpensePeriod(space.id, period.id, { participant_inputs: participantInputs }); }, 'Datos personales actualizados.')} participant={currentParticipant} period={period} /> : null}
               {categoryManager}
               {period.status === 'open' || space.role === 'owner' ? <button className="secondary-button expense-period-toggle" disabled={busy} onClick={() => void run(async () => { await updateExpensePeriod(space.id, period.id, { status: period.status === 'open' ? 'closed' : 'open' }); }, period.status === 'open' ? 'Periodo cerrado.' : 'Periodo reabierto.')} type="button">{period.status === 'open' ? 'Cerrar periodo' : 'Reabrir periodo'}</button> : null}
             </div>
           </details>
         </>
-      )}
+      )}</div>}
     </section>
   );
 }

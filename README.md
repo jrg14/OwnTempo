@@ -235,7 +235,7 @@ Las decisiones tecnológicas podrán revisarse durante el desarrollo.
 
 ### Informes mensuales con IA local
 
-El módulo de entrenamiento puede generar informes privados mediante Ollama. La
+Los módulos de entrenamiento y gastos pueden generar informes mensuales mediante Ollama. La
 IA se ejecuta únicamente al activar el perfil opcional `ai` de Docker Compose.
 La pestaña **Informes** permite seleccionar un mes, indicar el objetivo del
 periodo y encolar el análisis. El servicio `report-worker` procesa las
@@ -246,7 +246,7 @@ Solo el worker puede acceder a su API mediante la red privada de Docker. La
 descarga inicial obtiene el modelo desde el registro de Ollama, pero los JSON de
 salud y entrenamiento no se envían fuera del despliegue local.
 
-Los totales, promedios y comparaciones se calculan en Django. Ollama solo recibe
+Los totales, promedios, comparaciones y previsiones se calculan en Django. Ollama solo recibe
 un JSON agregado y devuelve la interpretación, que se valida antes de guardarse.
 La instalación y el primer informe se explican paso a paso en
 [Puesta en marcha completa](#puesta-en-marcha-completa).
@@ -533,7 +533,47 @@ acciones propuestas para el siguiente mes.
 
 Si corriges datos o cambias el objetivo, usa **Regenerar informe**.
 
-### 9. Arranques posteriores
+### 9. Preparar Gastos personales o comunes
+
+Los informes de gastos funcionan tanto en el espacio personal como en uno
+compartido. Para prepararlos:
+
+1. En **Configurar módulos**, activa **Gastos** en el espacio que quieras analizar.
+2. Abre **Gastos** y crea el periodo del mes.
+3. En el espacio personal, registra el ingreso mensual y el saldo inicial.
+4. En el espacio compartido, registra los participantes, sus ingresos y el
+   criterio de reparto.
+5. Añade los movimientos con una categoría y una fecha del mismo mes.
+
+El informe personal utiliza exclusivamente los gastos personales del
+propietario. El informe de un espacio compartido utiliza exclusivamente los
+gastos comunes; nunca incorpora las líneas personales de sus miembros. Cuantos
+más periodos anteriores existan, mejores serán las comparaciones y la detección
+de tendencias. Con menos de dos meses históricos el informe avisa de que las
+conclusiones son provisionales.
+
+### 10. Generar un informe de gastos
+
+Dentro del espacio que quieras analizar, abre:
+
+```text
+Gastos → Informes
+```
+
+Después:
+
+1. Selecciona el mes actual o uno anterior.
+2. Añade, si lo deseas, un presupuesto total y un objetivo de ahorro.
+3. Marca únicamente las categorías que tú consideres evitables.
+4. Pulsa **Generar análisis** y espera a que el worker termine.
+
+El resultado muestra el gasto del mes, la comparación histórica, excesos por
+categoría, tendencia, gastos recurrentes o extraordinarios, previsión anual y
+escenarios reduciendo el gasto evitable un 10 % o un 20 %. En un mes todavía en
+curso, la previsión anual escala el gasto por los días transcurridos y muestra
+una advertencia. Puedes cambiar las opciones y pulsar **Regenerar análisis**.
+
+### 11. Arranques posteriores
 
 El modelo y la base de datos se conservan en volúmenes. En los siguientes
 arranques solo necesitas ejecutar:
@@ -545,7 +585,7 @@ docker compose --profile ai up -d
 Abre la aplicación en `http://localhost:8080`. El backend aplica automáticamente
 las migraciones pendientes antes de iniciar Gunicorn.
 
-### 10. Diagnóstico de informes
+### 12. Diagnóstico de informes
 
 Si un informe termina con error, comprueba primero el modelo:
 
@@ -576,7 +616,7 @@ Para aplicar cambios en `.env` o reconstruir imágenes:
 docker compose --profile ai up -d --build --force-recreate
 ```
 
-### 11. Pruebas
+### 13. Pruebas
 
 Para ejecutar la suite completa del backend:
 
@@ -594,7 +634,7 @@ npm run lint
 npm run build
 ```
 
-### 12. Detener la aplicación
+### 14. Detener la aplicación
 
 Para detener y retirar los contenedores sin borrar PostgreSQL ni el modelo:
 
@@ -615,8 +655,9 @@ docker compose exec backend python manage.py createsuperuser
 docker compose --profile ai ps
 ```
 
-Después abre `http://localhost:8080`, activa Entrenamiento en el espacio personal,
-registra datos y genera el informe desde la pestaña **Informes**.
+Después abre `http://localhost:8080`, activa Entrenamiento o Gastos en el espacio
+correspondiente, registra datos y genera el informe desde la pestaña
+**Informes**.
 
 ## Operación habitual con Docker
 

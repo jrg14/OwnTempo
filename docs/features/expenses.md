@@ -19,9 +19,10 @@ pagó. El servidor calcula el total, el aporte que corresponde a cada persona,
 lo pagado realmente y una única transferencia de ajuste. Los cálculos utilizan
 decimales y asignan cualquier céntimo residual de forma determinista.
 
-Un espacio personal utiliza un único participante y ofrece solo saldo inicial,
-gastos personales, categorías y saldo final. No muestra ni admite gastos
-comunes, ingresos, reparto o transferencias de ajuste.
+Un espacio personal utiliza un único participante y ofrece ingreso mensual,
+saldo inicial, gastos personales, categorías y saldo final. No muestra ni
+admite gastos comunes, reparto o transferencias de ajuste. El ingreso se usa
+para previsiones; el saldo inicial continúa siendo el límite operativo del mes.
 
 ## Ahorro y gastos personales
 
@@ -52,6 +53,7 @@ La app `apps.expenses` define:
 - `ExpenseParticipant`, con ingreso, porcentaje y saldo personal inicial;
 - `CommonExpense`, con categoría y pagador;
 - `PersonalExpense`, con categoría y propietario.
+- `MonthlyExpenseReport`, con el snapshot calculado y la interpretación local.
 
 Al crear el primer periodo se generan de forma idempotente las categorías
 Vivienda, Alimentación, Suministros, Transporte, Ocio y Otros. Las categorías
@@ -68,6 +70,25 @@ usuario actual.
 Los periodos pueden cerrarse para bloquear cambios. Cualquier participante
 puede cerrarlos y solo el propietario del espacio puede reabrirlos.
 
+Los informes mensuales se sirven bajo `monthly-reports/`. La creación devuelve
+`202 Accepted`; el worker común de informes procesa la cola sin bloquear la API.
+En un espacio personal solo se agregan los gastos personales del propietario.
+En uno compartido solo se agregan los gastos comunes y nunca los detalles
+personales de los miembros.
+
+## Informes mensuales
+
+La pestaña **Informes** permite elegir mes, presupuesto opcional, objetivo y
+categorías consideradas evitables. Django calcula medias históricas, excesos,
+tendencia, meses extraordinarios, recurrencias, proyección anual y escenarios
+de reducción del 10 % y 20 %. Ollama recibe ese JSON agregado y devuelve una
+interpretación estructurada en español; no realiza los cálculos financieros.
+
+Los meses en curso se identifican como parciales y su gasto se escala según los
+días transcurridos únicamente para la previsión anual. La interfaz mantiene el
+importe real registrado como dato del mes y presenta todas las predicciones
+como estimaciones.
+
 ## PWA
 
 La ruta `/spaces/{space_id}/expenses/` incluye:
@@ -82,9 +103,10 @@ La ruta `/spaces/{space_id}/expenses/` incluye:
   y saldo personal final;
 - creación de categorías;
 - estados de carga, error, periodo vacío, cerrado y módulo no disponible.
+- pestaña de informes con generación asíncrona, escenarios e histórico.
 
 Los espacios personales permiten crear su propio periodo mensual introduciendo
-directamente el saldo personal inicial.
+el ingreso mensual y el saldo personal inicial.
 
 ## Verificación realizada
 

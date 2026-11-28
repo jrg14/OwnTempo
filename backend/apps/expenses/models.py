@@ -156,3 +156,94 @@ class PersonalExpense(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+
+class MonthlyExpenseReport(models.Model):
+    class Scope(models.TextChoices):
+        PERSONAL = "personal", "Personal"
+        COMMON = "common", "Común"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        PROCESSING = "processing", "Procesando"
+        COMPLETED = "completed", "Completado"
+        FAILED = "failed", "Fallido"
+
+    space = models.ForeignKey(
+        Space,
+        on_delete=models.CASCADE,
+        related_name="monthly_expense_reports",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="requested_expense_reports",
+    )
+    month = models.DateField(help_text="Primer día del mes analizado.")
+    scope = models.CharField(max_length=16, choices=Scope.choices)
+    goal = models.TextField(blank=True)
+    monthly_budget = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+    avoidable_category_ids = models.JSONField(default=list, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    input_payload = models.JSONField(default=dict, blank=True)
+    result_payload = models.JSONField(default=dict, blank=True)
+    model_name = models.CharField(max_length=120, blank=True)
+    prompt_version = models.CharField(max_length=24, default="1.0")
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-month", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("space", "month"),
+                name="unique_monthly_expense_report",
+            ),
+            models.CheckConstraint(
+                condition=Q(monthly_budget__isnull=True) | Q(monthly_budget__gte=0),
+                name="expense_report_nonnegative_budget",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("space", "month"),
+                name="expense_report_month_idx",
+            ),
+            models.Index(
+                fields=("status", "created_at"),
+                name="expense_report_queue_idx",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.month and self.month.day != 1:
+            raise ValidationError({"month": "El mes debe guardarse usando su primer día."})
+        if self.space_id and self.requested_by_id and not Membership.objects.filter(
+            space_id=self.space_id,
+            user_id=self.requested_by_id,
+        ).exists():
+            raise ValidationError({"requested_by": "La persona debe pertenecer al espacio."})
+        if self.space_id:
+            expected_scope = (
+                self.Scope.PERSONAL
+                if self.space.kind == Space.Kind.PERSONAL
+                else self.Scope.COMMON
+            )
+            if self.scope != expected_scope:
+                raise ValidationError({"scope": "El alcance no coincide con el tipo de espacio."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

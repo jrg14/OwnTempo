@@ -10,6 +10,9 @@ from .views import (
     ExpenseSummaryView,
     PersonalExpenseDetailView,
     PersonalExpenseListCreateView,
+    MonthlyExpenseReportDetailView,
+    MonthlyExpenseReportListCreateView,
+    MonthlyExpenseReportRegenerateView,
 )
 
 app_name = "expenses"
@@ -24,4 +27,7 @@ urlpatterns = [
     path("spaces/<int:space_id>/expenses/periods/<int:period_id>/expenses/<int:expense_id>/", CommonExpenseDetailView.as_view(), name="common-detail"),
     path("spaces/<int:space_id>/expenses/periods/<int:period_id>/personal-expenses/", PersonalExpenseListCreateView.as_view(), name="personal-list"),
     path("spaces/<int:space_id>/expenses/periods/<int:period_id>/personal-expenses/<int:expense_id>/", PersonalExpenseDetailView.as_view(), name="personal-detail"),
+    path("spaces/<int:space_id>/expenses/monthly-reports/", MonthlyExpenseReportListCreateView.as_view(), name="monthly-report-list"),
+    path("spaces/<int:space_id>/expenses/monthly-reports/<int:report_id>/", MonthlyExpenseReportDetailView.as_view(), name="monthly-report-detail"),
+    path("spaces/<int:space_id>/expenses/monthly-reports/<int:report_id>/regenerate/", MonthlyExpenseReportRegenerateView.as_view(), name="monthly-report-regenerate"),
 ]

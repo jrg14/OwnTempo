@@ -75,6 +75,91 @@ export type ExpenseEntryInput = {
   paid_by_id?: number;
 };
 
+export type ExpenseReportResult = {
+  title: string;
+  summary: string;
+  overall_status: 'on_track' | 'needs_attention' | 'insufficient_data';
+  scores: {
+    spending_control: number;
+    trend: number;
+    savings_outlook: number;
+  };
+  avoidable_findings: string[];
+  trend_findings: string[];
+  forecast_findings: string[];
+  recommended_actions: string[];
+  cautions: string[];
+};
+
+export type ExpenseReportMetrics = {
+  scope: 'personal' | 'common';
+  period: { month: string; is_partial: boolean };
+  budget: { monthly: number | null; actual: number; difference: number | null };
+  current_month: {
+    total: number;
+    income: number;
+    movement_count: number;
+    categories: Array<{
+      id: number;
+      name: string;
+      total: number;
+      historical_average: number | null;
+      difference: number | null;
+      difference_percentage: number | null;
+      excess: number | null;
+      avoidable: boolean;
+    }>;
+  };
+  evolution: {
+    monthly: Array<{ month: string; total: number; income: number; movement_count: number }>;
+    previous_month_change: number | null;
+    previous_year_same_month_change: number | null;
+    monthly_trend_amount: number;
+    trend: 'increasing' | 'decreasing' | 'stable';
+    extraordinary_months: Array<{ month: string; total: number }>;
+  };
+  avoidable_spending: {
+    current_total: number;
+    current_share_percentage: number;
+    historical_excess: number;
+    reduction_10: number;
+    reduction_20: number;
+  };
+  annual_forecast: {
+    projected_expenses: number;
+    projected_income: number | null;
+    projected_savings: number | null;
+    scenarios: {
+      baseline: ExpenseForecastScenario;
+      reduce_avoidable_10: ExpenseForecastScenario;
+      reduce_avoidable_20: ExpenseForecastScenario;
+    };
+  };
+  data_quality: { historical_months: number; warnings: string[] };
+};
+
+export type ExpenseForecastScenario = {
+  projected_expenses: number;
+  future_avoidable_reduction: number;
+  projected_savings: number | null;
+};
+
+export type MonthlyExpenseReport = {
+  id: number;
+  month: string;
+  scope: 'personal' | 'common';
+  goal: string;
+  monthly_budget: string | null;
+  avoidable_category_ids: number[];
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  input_payload: ExpenseReportMetrics | Record<string, never>;
+  result_payload: ExpenseReportResult | Record<string, never>;
+  model_name: string;
+  prompt_version: string;
+  error_message: string;
+  completed_at: string | null;
+};
+
 const base = (spaceId: number) => `/api/v1/spaces/${spaceId}/expenses`;
 
 export async function fetchExpensePeriods(spaceId: number) {
@@ -135,4 +220,21 @@ export async function updatePersonalExpense(spaceId: number, periodId: number, e
 
 export async function deletePersonalExpense(spaceId: number, periodId: number, expenseId: number) {
   await mutate(`${base(spaceId)}/periods/${periodId}/personal-expenses/${expenseId}/`, 'DELETE');
+}
+
+export async function fetchMonthlyExpenseReports(spaceId: number) {
+  return (await request(`${base(spaceId)}/monthly-reports/`)) as MonthlyExpenseReport[];
+}
+
+export async function queueMonthlyExpenseReport(spaceId: number, input: {
+  month: string;
+  goal: string;
+  monthly_budget: string | null;
+  avoidable_category_ids: number[];
+}) {
+  return (await mutate(`${base(spaceId)}/monthly-reports/`, 'POST', input)) as MonthlyExpenseReport;
+}
+
+export async function deleteMonthlyExpenseReport(spaceId: number, reportId: number) {
+  await mutate(`${base(spaceId)}/monthly-reports/${reportId}/`, 'DELETE');
 }

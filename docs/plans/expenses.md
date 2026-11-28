@@ -1,5 +1,8 @@
 # Plan de implementación: gastos comunes y ajuste de pareja
 
+La ampliación de análisis mensual y predicción anual se documenta en
+[`monthly-expense-analysis.md`](monthly-expense-analysis.md).
+
 ## Estado
 
 Implementado. El comportamiento real está documentado en

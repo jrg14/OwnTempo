@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -7,10 +8,11 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.modules.models import SpaceModule
-from apps.spaces.models import Membership
+from apps.spaces.models import Membership, Space
 from apps.spaces.services import create_shared_space
 
-from .models import CommonExpense, PersonalExpense
+from .models import CommonExpense, MonthlyExpenseReport, PersonalExpense
+from .monthly_reports import build_expense_context, claim_pending_report, generate_monthly_report
 from .services import (
     ExpenseOperationError,
     calculate_period_summary,
@@ -237,3 +239,146 @@ class PersonalSpaceExpenseApiTests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class MonthlyExpenseReportTests(APITestCase):
+    def setUp(self):
+        users = get_user_model()
+        self.user = users.objects.create_user(username="report-owner", password="secret")
+        self.member = users.objects.create_user(username="report-member", password="secret")
+        self.personal_space = Space.objects.get(
+            created_by=self.user,
+            kind=Space.Kind.PERSONAL,
+        )
+        self.month = date.today().replace(day=1)
+        self.previous_month = (self.month - timedelta(days=1)).replace(day=1)
+        self.client.force_authenticate(self.user)
+
+    def create_personal_period(self, month, amount, description="Cine"):
+        period = create_period(self.user, self.personal_space, {
+            "year": month.year,
+            "month": month.month,
+            "split_mode": "equal",
+            "participants": [{
+                "user_id": self.user.id,
+                "income": Decimal("2500.00"),
+                "personal_starting_savings": Decimal("3000.00"),
+                "custom_percentage": Decimal("100.00"),
+            }],
+        })
+        category = self.personal_space.expense_categories.get(name="Ocio")
+        create_personal_expense(self.user, period, {
+            "category": category,
+            "description": description,
+            "amount": Decimal(amount),
+            "spent_on": month.replace(day=10),
+        })
+        return period, category
+
+    def test_personal_context_calculates_excess_and_scenarios(self):
+        self.create_personal_period(self.previous_month, "100.00")
+        _, category = self.create_personal_period(self.month, "300.00")
+
+        context = build_expense_context(
+            self.personal_space,
+            self.user,
+            self.month,
+            "Reducir ocio",
+            Decimal("250.00"),
+            [category.id],
+        )
+
+        ocio = next(item for item in context["current_month"]["categories"] if item["id"] == category.id)
+        self.assertEqual(context["scope"], "personal")
+        self.assertEqual(context["current_month"]["total"], 300.0)
+        self.assertEqual(ocio["historical_average"], 100.0)
+        self.assertEqual(ocio["excess"], 200.0)
+        self.assertEqual(context["avoidable_spending"]["reduction_10"], 30.0)
+        self.assertIsNotNone(context["annual_forecast"]["projected_income"])
+
+    def test_common_context_never_includes_personal_expenses(self):
+        shared = create_shared_space(self.user, "Informe común")
+        Membership.objects.create(user=self.member, space=shared, role=Membership.Role.MEMBER)
+        period = create_period(self.user, shared, {
+            "year": self.month.year,
+            "month": self.month.month,
+            "split_mode": "equal",
+            "participants": [
+                {"user_id": self.user.id, "income": Decimal("2000.00"), "personal_starting_savings": Decimal("1000.00"), "custom_percentage": Decimal("50.00")},
+                {"user_id": self.member.id, "income": Decimal("1800.00"), "personal_starting_savings": Decimal("1000.00"), "custom_percentage": Decimal("50.00")},
+            ],
+        })
+        category = shared.expense_categories.get(name="Vivienda")
+        owner = period.participants.get(user=self.user)
+        create_common_expense(self.user, period, {
+            "category": category,
+            "description": "Alquiler",
+            "amount": Decimal("900.00"),
+            "spent_on": self.month.replace(day=1),
+            "paid_by": owner,
+        })
+        create_personal_expense(self.user, period, {
+            "category": category,
+            "description": "Compra privada",
+            "amount": Decimal("700.00"),
+            "spent_on": self.month.replace(day=2),
+        })
+
+        context = build_expense_context(shared, self.user, self.month)
+
+        self.assertEqual(context["scope"], "common")
+        self.assertEqual(context["current_month"]["total"], 900.0)
+        self.assertNotIn(
+            "Compra privada",
+            [item["description"] for item in context["largest_expenses"]],
+        )
+
+    def test_report_api_queues_and_is_shared_with_members(self):
+        _, category = self.create_personal_period(self.month, "80.00")
+        url = reverse("expenses:monthly-report-list", args=(self.personal_space.id,))
+        response = self.client.post(url, {
+            "month": self.month.strftime("%Y-%m"),
+            "goal": "Gastar menos",
+            "monthly_budget": "500.00",
+            "avoidable_category_ids": [category.id],
+        }, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED, response.data)
+        self.assertEqual(response.data["scope"], "personal")
+        self.assertEqual(response.data["status"], "pending")
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
+
+    @patch("apps.expenses.monthly_reports.request_local_analysis")
+    def test_worker_validates_and_persists_analysis(self, request_analysis):
+        _, category = self.create_personal_period(self.month, "80.00")
+        request_analysis.return_value = {
+            "title": "Gasto bajo control",
+            "summary": "El gasto se mantiene dentro del presupuesto indicado.",
+            "overall_status": "on_track",
+            "scores": {
+                "spending_control": 8,
+                "trend": 7,
+                "savings_outlook": 8,
+            },
+            "avoidable_findings": ["El ocio representa una parte limitada del gasto."],
+            "trend_findings": ["Todavía hay poco histórico."],
+            "forecast_findings": ["La previsión depende de mantener los ingresos."],
+            "recommended_actions": ["Mantén el presupuesto mensual."],
+            "cautions": ["La predicción no es una garantía."],
+        }
+        report = MonthlyExpenseReport.objects.create(
+            space=self.personal_space,
+            requested_by=self.user,
+            month=self.month,
+            scope=MonthlyExpenseReport.Scope.PERSONAL,
+            goal="Ahorrar",
+            monthly_budget=Decimal("500.00"),
+            avoidable_category_ids=[category.id],
+        )
+
+        report_id = claim_pending_report()
+        generated = generate_monthly_report(report_id)
+
+        self.assertEqual(generated.status, MonthlyExpenseReport.Status.COMPLETED)
+        self.assertEqual(generated.result_payload["title"], "Gasto bajo control")
+        self.assertEqual(generated.input_payload["scope"], "personal")

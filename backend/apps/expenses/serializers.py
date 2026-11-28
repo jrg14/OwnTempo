@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from apps.spaces.models import Membership, Space
 
-from .models import CommonExpense, ExpenseCategory, ExpenseParticipant, ExpensePeriod, PersonalExpense
+from .models import CommonExpense, ExpenseCategory, ExpenseParticipant, ExpensePeriod, MonthlyExpenseReport, PersonalExpense
 from .services import (
     ExpenseOperationError,
     create_common_expense,
@@ -212,3 +212,93 @@ class PersonalExpenseSerializer(serializers.ModelSerializer):
             return update_personal_expense(instance, validated_data)
         except ExpenseOperationError as error:
             raise serializers.ValidationError({"detail": str(error)}) from error
+
+
+class ExpenseReportScoresSerializer(serializers.Serializer):
+    spending_control = serializers.IntegerField(min_value=0, max_value=10)
+    trend = serializers.IntegerField(min_value=0, max_value=10)
+    savings_outlook = serializers.IntegerField(min_value=0, max_value=10)
+
+
+class ExpenseReportResultSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=160)
+    summary = serializers.CharField(max_length=1200)
+    overall_status = serializers.ChoiceField(
+        choices=("on_track", "needs_attention", "insufficient_data")
+    )
+    scores = ExpenseReportScoresSerializer()
+    avoidable_findings = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    trend_findings = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    forecast_findings = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    recommended_actions = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+    cautions = serializers.ListField(
+        child=serializers.CharField(max_length=400), max_length=5
+    )
+
+
+class MonthlyExpenseReportSerializer(serializers.ModelSerializer):
+    month = serializers.DateField(format="%Y-%m")
+
+    class Meta:
+        model = MonthlyExpenseReport
+        fields = (
+            "id",
+            "month",
+            "scope",
+            "goal",
+            "monthly_budget",
+            "avoidable_category_ids",
+            "status",
+            "input_payload",
+            "result_payload",
+            "model_name",
+            "prompt_version",
+            "error_message",
+            "created_at",
+            "updated_at",
+            "completed_at",
+        )
+        read_only_fields = fields
+
+
+class MonthlyExpenseReportCreateSerializer(serializers.Serializer):
+    month = serializers.RegexField(
+        regex=r"^\d{4}-(0[1-9]|1[0-2])$",
+        error_messages={"invalid": "El mes debe usar el formato AAAA-MM."},
+    )
+    goal = serializers.CharField(max_length=1000, allow_blank=True, required=False)
+    monthly_budget = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal("0.00"),
+        allow_null=True,
+        required=False,
+    )
+    avoidable_category_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        max_length=50,
+        required=False,
+        default=list,
+    )
+
+    def validate_avoidable_category_ids(self, value):
+        unique_ids = list(dict.fromkeys(value))
+        existing_ids = set(
+            ExpenseCategory.objects.filter(
+                space=self.context["space"],
+                id__in=unique_ids,
+            ).values_list("id", flat=True)
+        )
+        if existing_ids != set(unique_ids):
+            raise serializers.ValidationError(
+                "Alguna categoría no pertenece a este espacio."
+            )
+        return unique_ids

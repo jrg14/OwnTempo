@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView
@@ -9,8 +10,9 @@ from apps.modules.permissions import HasActiveModule
 from apps.spaces.models import Space
 from apps.spaces.permissions import IsSpaceMember
 
-from .models import CommonExpense, ExpenseCategory, ExpensePeriod, PersonalExpense
-from .serializers import CommonExpenseSerializer, ExpenseCategorySerializer, ExpensePeriodSerializer, PersonalExpenseSerializer
+from .models import CommonExpense, ExpenseCategory, ExpensePeriod, MonthlyExpenseReport, PersonalExpense
+from .monthly_reports import PROMPT_VERSION, normalize_month
+from .serializers import CommonExpenseSerializer, ExpenseCategorySerializer, ExpensePeriodSerializer, MonthlyExpenseReportCreateSerializer, MonthlyExpenseReportSerializer, PersonalExpenseSerializer
 from .services import ExpenseOperationError, calculate_period_summary, delete_common_expense, delete_personal_expense
 
 
@@ -163,3 +165,111 @@ class PersonalExpenseDetailView(PeriodMixin, RetrieveUpdateDestroyAPIView):
         except ExpenseOperationError as error:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"detail": str(error)}) from error
+
+
+def _queue_monthly_report(report, validated_data):
+    report.goal = validated_data.get("goal", "").strip()
+    report.monthly_budget = validated_data.get("monthly_budget")
+    report.avoidable_category_ids = validated_data.get("avoidable_category_ids", [])
+    report.status = MonthlyExpenseReport.Status.PENDING
+    report.input_payload = {}
+    report.result_payload = {}
+    report.model_name = ""
+    report.prompt_version = PROMPT_VERSION
+    report.error_message = ""
+    report.completed_at = None
+    report.save()
+    return report
+
+
+class MonthlyExpenseReportListCreateView(ExpenseMixin, APIView):
+    def get(self, request, *args, **kwargs):
+        reports = MonthlyExpenseReport.objects.filter(space=self.get_space())
+        return Response(MonthlyExpenseReportSerializer(reports, many=True).data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = MonthlyExpenseReportCreateSerializer(
+            data=request.data,
+            context={"space": self.get_space()},
+        )
+        serializer.is_valid(raise_exception=True)
+        month = normalize_month(serializer.validated_data["month"])
+        scope = (
+            MonthlyExpenseReport.Scope.PERSONAL
+            if self.get_space().kind == Space.Kind.PERSONAL
+            else MonthlyExpenseReport.Scope.COMMON
+        )
+        with transaction.atomic():
+            report = MonthlyExpenseReport.objects.select_for_update().filter(
+                space=self.get_space(), month=month
+            ).first()
+            if report and report.status == MonthlyExpenseReport.Status.PROCESSING:
+                return Response(
+                    {"detail": "El informe de este mes ya se está procesando."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            if report is None:
+                report = MonthlyExpenseReport(
+                    space=self.get_space(),
+                    requested_by=request.user,
+                    month=month,
+                    scope=scope,
+                )
+            else:
+                report.requested_by = request.user
+                report.scope = scope
+            _queue_monthly_report(report, serializer.validated_data)
+        return Response(
+            MonthlyExpenseReportSerializer(report).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class MonthlyExpenseReportDetailView(ExpenseMixin, APIView):
+    def get_report(self):
+        return get_object_or_404(
+            MonthlyExpenseReport,
+            pk=self.kwargs["report_id"],
+            space=self.get_space(),
+        )
+
+    def get(self, request, *args, **kwargs):
+        return Response(MonthlyExpenseReportSerializer(self.get_report()).data)
+
+    def delete(self, request, *args, **kwargs):
+        report = self.get_report()
+        if report.status == MonthlyExpenseReport.Status.PROCESSING:
+            return Response(
+                {"detail": "Espera a que termine la generación antes de eliminar el informe."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        report.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MonthlyExpenseReportRegenerateView(MonthlyExpenseReportDetailView):
+    http_method_names = ("post", "head", "options")
+
+    def post(self, request, *args, **kwargs):
+        existing = self.get_report()
+        serializer = MonthlyExpenseReportCreateSerializer(
+            data={
+                **request.data,
+                "month": existing.month.strftime("%Y-%m"),
+            },
+            context={"space": self.get_space()},
+        )
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            report = MonthlyExpenseReport.objects.select_for_update().get(pk=existing.pk)
+            if report.status == MonthlyExpenseReport.Status.PROCESSING:
+                return Response(
+                    {"detail": "El informe ya se está procesando."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            report.requested_by = request.user
+            _queue_monthly_report(report, serializer.validated_data)
+        return Response(
+            MonthlyExpenseReportSerializer(report).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
